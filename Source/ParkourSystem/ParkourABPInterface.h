@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "GameplayTagContainer.h"
+
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "ParkourABPInterface.generated.h"
@@ -22,4 +24,24 @@ class PARKOURSYSTEM_API IParkourABPInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+
+	bool SetParkourState(const FGameplayTag& NewParkourState);
+
+	bool SetParkourAction(const FGameplayTag& NewParkourAction);
+
+	bool SetClimbStyle(const FGameplayTag& NewClimbStyle);
+
+	bool SetClimbMovement(const FGameplayTag& NewDirection);
+
+	bool SetLeftHandLedgeLocation(FVector LeftHandLedgeLocation);
+
+	bool SetRightHandLedgeLocation(FVector RightHandLedgeLocation);
+	
+	bool SetLeftFootLedgeLocation(FVector LeftFootLedgeLocation);
+	
+	bool SetRightFootLedgeLocation(FVector RightFootLedgeLocation);
+
+	bool SetLeftHandLedgeRotation(FRotator LeftHandLedgeRotation);
+
+	bool SetRightHandLedgeRotation(FRotator RightHandLedgeRotation);
 };

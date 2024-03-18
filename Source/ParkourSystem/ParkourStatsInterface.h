@@ -22,4 +22,8 @@ class PARKOURSYSTEM_API IParkourStatsInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+
+	bool SetParkourState(FString ParkourState);
+	bool SetParkourAction(FString ParkourAction);
+	bool SetClimbStyle(FString ClimbStyle);
 };

@@ -8,6 +8,17 @@ public class ParkourSystem : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayTags" });
+        PublicDependencyModuleNames.AddRange(new string[] { 
+            //Default
+            "Core",
+            "CoreUObject",
+            "Engine",
+            "InputCore",
+            "EnhancedInput",
+
+            //For plugin
+            "GameplayTags",
+            "MotionWarping"
+        });
     }
 }
