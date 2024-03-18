@@ -27,5 +27,6 @@ class PARKOURSYSTEM_API IParkourInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	bool SetInitializeRefference(const ACharacter& Character, const USpringArmComponent& CameraBoom, const UMotionWarpingComponent& MotionWarping, const UCameraComponent& Camera);
+	virtual bool SetInitializeReference(ACharacter* Character, USpringArmComponent* CameraBoom, UMotionWarpingComponent* MotionWarping, UCameraComponent* Camera) = 0;
+
 };

@@ -9,6 +9,8 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UParkourComponent;
+class UMotionWarpingComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -28,6 +30,12 @@ class AParkourSystemCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UParkourComponent* ParkourComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UMotionWarpingComponent* MotionWarping;
+	
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
@@ -43,6 +51,8 @@ class AParkourSystemCharacter : public ACharacter
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
+
+
 
 public:
 	AParkourSystemCharacter();
