@@ -1,29 +1,26 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "ParkourStatsInterface.generated.h"
 
-// This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UParkourStatsInterface : public UInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 };
 
-/**
- * 
- */
-class PARKOURSYSTEM_API IParkourStatsInterface
+class IParkourStatsInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ParkourSystem")
+    bool SetParkourState(const FString& ParkourState);
 
-	bool SetParkourState(FString ParkourState);
-	bool SetParkourAction(FString ParkourAction);
-	bool SetClimbStyle(FString ClimbStyle);
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ParkourSystem")
+    bool SetParkourAction(const FString& ParkourAction);
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ParkourSystem")
+    bool SetClimbStyle(const FString& ClimbStyle);
 };

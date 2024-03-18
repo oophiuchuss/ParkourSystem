@@ -18,7 +18,8 @@ public class ParkourSystem : ModuleRules
 
             //For plugin
             "GameplayTags",
-            "MotionWarping"
+            "MotionWarping",
+            "UMG"
         });
     }
 }

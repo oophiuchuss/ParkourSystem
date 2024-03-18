@@ -9,6 +9,8 @@ AArrowActor::AArrowActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
+	ArrowComponent->SetRelativeRotation(FRotator(.0f, 90.0f, .0f));
 }
 
 // Called when the game starts or when spawned
