@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "WidgetActor.h"
 #include "ArrowActor.h"
+#include "GameplayTagContainer.h"
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -21,6 +22,15 @@ public:
 	// Sets default values for this component's properties
 	UParkourComponent();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputMappingContext* ParkourMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* ParkourInputAction;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void ParkourAction();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -32,6 +42,9 @@ public:
 	virtual bool SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera) override;
 
 private:
+
+	bool ChekcWallShape();
+
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
 	USkeletalMeshComponent* CharacterMesh;
@@ -47,4 +60,8 @@ private:
 	float CharacterHeight;
 	float FirstTargetArmLenght;
 	FVector FirstTargetRelativeLocation;
+	FGameplayTag ParkourActionTag;
+	bool bAutoClimb;
+	bool bCanAutoClimb;
+	bool bCanManualClimb;
 };

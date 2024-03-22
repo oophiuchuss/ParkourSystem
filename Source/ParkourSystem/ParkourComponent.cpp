@@ -2,7 +2,9 @@
 
 
 #include "ParkourComponent.h"
-
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -14,6 +16,28 @@ UParkourComponent::UParkourComponent()
 	// ...
 }
 
+//TODO: there sould be bool
+void UParkourComponent::ParkourAction()
+{
+	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
+	{
+		if (bAutoClimb)
+		{
+			if (bCanAutoClimb)
+			{
+
+			}
+		}
+		else
+		{
+			if (bCanManualClimb)
+			{
+
+			}
+		}
+	}
+
+}
 
 // Called when the game starts
 void UParkourComponent::BeginPlay()
@@ -23,7 +47,6 @@ void UParkourComponent::BeginPlay()
 	// ...
 	
 }
-
 
 // Called every frame
 void UParkourComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -43,6 +66,10 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	CameraBoom = NewCameraBoom;
 	MotionWarping = NewMotionWarping;
 	Camera = NewCamera;
+	ParkourActionTag = FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction");
+	bAutoClimb = false;
+	bCanAutoClimb = false;
+	bCanManualClimb = false;
 
 	if (Character)
 	{
@@ -56,7 +83,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 				true                          
 			);
 			WidgetActor->AttachToComponent(Camera, AttachmentRules);
-			WidgetActor->SetActorRelativeLocation(FVector(30.0, 8.0, -3.0));
+			WidgetActor->SetActorRelativeLocation(FVector(60.0, 50.0, -3.0));
 		}
 		else
 			return false;
@@ -80,9 +107,25 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 		else
 			return false;
 
+
+
+		if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->AddMappingContext(ParkourMappingContext, 0);
+
+				if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent))
+				{
+					EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Triggered, this, &UParkourComponent::ParkourAction);
+				}
+			}
+		}
+
 	}
 	else
 		return false;
+
 
 
 	if (CameraBoom)
@@ -94,6 +137,26 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 		return false;
 
 	return true;
+}
+
+bool UParkourComponent::ChekcWallShape()
+{
+	int index = 0;
+	if (CharacterMovement->IsFalling())
+		index = 8;
+	else
+		index = 15;
+
+	for (size_t i = 0; i < index; i++)
+	{
+		for (size_t j = 0; j < 11; j++)
+		{
+			FHitResult HitResult;
+			//bool bHit = Character->GetWorld()->SweepSingleByChannel(HitResult, )
+		}
+	}
+
+	return false;
 }
 
 
