@@ -61,7 +61,16 @@ private:
 	float FirstTargetArmLenght;
 	FVector FirstTargetRelativeLocation;
 	FGameplayTag ParkourActionTag;
+	FGameplayTag ParkourStateTag;
 	bool bAutoClimb;
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
+	TArray<FHitResult> WallHitTraces;
+	TArray<FHitResult> HopHitTraces;
+	FHitResult WallHitResult;
+	FHitResult WallTopResult;
+	FHitResult TopHits;
+	FHitResult WallDepthResult;
+	FHitResult WallVaultResult;
+	FRotator WallRotation;
 };
