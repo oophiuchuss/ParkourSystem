@@ -5,13 +5,15 @@
 
 FRotator UParkourFunctionLibrary::NormalReverseRotationZ(FVector Normal)
 {
-	FMatrix RotationMatrix = FRotationMatrix::MakeFromX(Normal);
-	FRotator RotatorFromX = RotationMatrix.Rotator();
+	FRotator RelativeRotation = Normal.Rotation();
+	FRotator TargetRotation = FRotationMatrix::MakeFromX(RelativeRotation.Vector()).Rotator();
 
-	RotatorFromX.Yaw += 180.f;
-	RotatorFromX.Normalize();
+	TargetRotation.Pitch = .0f;
+	TargetRotation.Roll = .0f;
+	TargetRotation.Yaw -= 180.f;
+	TargetRotation.Normalize();
 
-	return RotatorFromX;
+	return TargetRotation;
 }
 
 void UParkourFunctionLibrary::ReverseRotation(FRotator& Rotator)

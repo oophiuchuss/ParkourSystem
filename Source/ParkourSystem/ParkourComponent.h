@@ -43,7 +43,17 @@ public:
 
 private:
 
-	bool ChekcWallShape();
+	void ChekcWallShape();
+
+	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel);
+
+	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel);
+
+	void ShowHitResults();
+
+	bool CheckDistance();
+
+	void ParkourType(bool AutoClimb);
 
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
@@ -65,6 +75,11 @@ private:
 	bool bAutoClimb;
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
+	bool bShowHitResult;
+	bool bDrawDebug;
+	float WallHeight;
+	float WallDepth;
+	float VaultHeight;
 	TArray<FHitResult> WallHitTraces;
 	TArray<FHitResult> HopHitTraces;
 	FHitResult WallHitResult;
