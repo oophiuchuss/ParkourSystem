@@ -9,7 +9,11 @@
 #include "Components/CapsuleComponent.h"
 #include "ParkourABPInterface.h"
 #include "ParkourStatsInterface.h"
-
+#include "ThinVaultDT.h"
+#include "VaultDT.h"
+#include "HightVaultDT.h"
+#include "MantleDT.h"
+#include "LowMantleDT.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -523,9 +527,9 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
 		return;
 	}
-	
+
 	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
-	ParkourABPInterface->Execute_SetParkourAction(AnimInstance, NewParkourAction);
+	ParkourABPInterface->Execute_SetParkourAction(AnimInstance, ParkourActionTag);
 
 	if (!WidgetActor->WidgetComponent->GetWidget()->GetClass()->ImplementsInterface(UParkourStatsInterface::StaticClass()))
 	{
@@ -534,7 +538,90 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	}
 
 	IParkourStatsInterface* ParkourStatsInterface = Cast<IParkourStatsInterface>(WidgetActor->WidgetComponent->GetWidget());
-	ParkourStatsInterface->Execute_SetParkourAction(WidgetActor->WidgetComponent->GetWidget(), NewParkourAction.GetTagName().ToString());
+	ParkourStatsInterface->Execute_SetParkourAction(WidgetActor->WidgetComponent->GetWidget(), ParkourActionTag.GetTagName().ToString());
+
+	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ThinVault"))
+	{
+		ParkourVariables = NewObject<UThinVaultDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.HightVault"))
+	{
+		ParkourVariables = NewObject<UHightVaultDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Vault"))
+	{
+		ParkourVariables = NewObject<UVaultDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Mantle"))
+	{
+		ParkourVariables = NewObject<UMantleDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.LowMantle"))
+	{
+		ParkourVariables = NewObject<ULowMantleDT>();
+	}
+
+	PlayParkourMontage();
+}
+
+void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
+{
+	if (ParkourStateTag == NewParkourState)
+		return;
+
+	ParkourStateTag = NewParkourState;
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetParkourState(AnimInstance, ParkourStateTag);
+
+	if (!WidgetActor->WidgetComponent->GetWidget()->GetClass()->ImplementsInterface(UParkourStatsInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: Widget does not implement the Stats interface"));
+		return;
+	}
+
+	IParkourStatsInterface* ParkourStatsInterface = Cast<IParkourStatsInterface>(WidgetActor->WidgetComponent->GetWidget());
+	ParkourStatsInterface->Execute_SetParkourState(WidgetActor->WidgetComponent->GetWidget(), ParkourStateTag.GetTagName().ToString());
+
+	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
+	{
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator::ZeroRotator, true, true);
+	}
+	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Mantle"))
+	{
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, .0f, 500.0f), true, false);
+	}
+	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Vault"))
+	{
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, .0f, 500.0f), true, false);
+	}
+	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.ReachLedge"))
+	{
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, .0f, 500.0f), true, false);
+	}
+	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
+	{
+		SetUpParkourSettings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, FRotator(.0f, .0f, 500.0f), true, false);
+	}
+
+	PlayParkourMontage();
+}
+
+void UParkourComponent::SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately)
+{
+	CapsuleComponent->SetCollisionEnabled(CollsionType);
+	CharacterMovement->SetMovementMode(MovementMode);
+	CharacterMovement->RotationRate = RotationRate;
+	CameraBoom->bDoCollisionTest = bDoCollisionTest;
+
+	if (bStopImmediately)
+		CharacterMovement->StopMovementImmediately();
 }
 
 bool UParkourComponent::CheckMantleSurface()
@@ -579,5 +666,9 @@ bool UParkourComponent::CheckVaultSurface()
 	}
 
 	return !HitResult.bBlockingHit;
+}
+
+void UParkourComponent::PlayParkourMontage()
+{
 }
 

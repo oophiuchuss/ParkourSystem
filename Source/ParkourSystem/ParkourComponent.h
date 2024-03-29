@@ -7,6 +7,7 @@
 #include "WidgetActor.h"
 #include "ArrowActor.h"
 #include "GameplayTagContainer.h"
+#include "ParkourVariables.h"
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -57,9 +58,15 @@ private:
 
 	void SetParkourAction(const FGameplayTag& NewParkourAction);
 
+	void SetParkourState(const FGameplayTag& NewParkourState);
+
+	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
+
 	bool CheckMantleSurface();
 
 	bool CheckVaultSurface();
+
+	void PlayParkourMontage();
 
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
@@ -95,4 +102,5 @@ private:
 	FHitResult WallDepthResult;
 	FHitResult WallVaultResult;
 	FRotator WallRotation;
+	UParkourVariables* ParkourVariables;
 };
