@@ -51,9 +51,15 @@ private:
 
 	void ShowHitResults();
 
-	bool CheckDistance();
+	void CheckDistance();
 
 	void ParkourType(bool AutoClimb);
+
+	void SetParkourAction(const FGameplayTag& NewParkourAction);
+
+	bool CheckMantleSurface();
+
+	bool CheckVaultSurface();
 
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
@@ -77,6 +83,7 @@ private:
 	bool bCanManualClimb;
 	bool bShowHitResult;
 	bool bDrawDebug;
+	bool bOnGround;
 	float WallHeight;
 	float WallDepth;
 	float VaultHeight;

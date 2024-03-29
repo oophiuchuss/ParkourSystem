@@ -4,7 +4,7 @@
 #include "UObject/Interface.h"
 #include "ParkourStatsInterface.generated.h"
 
-UINTERFACE(MinimalAPI)
+UINTERFACE(Blueprintable, MinimalAPI)
 class UParkourStatsInterface : public UInterface
 {
     GENERATED_BODY()

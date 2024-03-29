@@ -6,10 +6,10 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ParkourFunctionLibrary.h"
+#include "Components/CapsuleComponent.h"
+#include "ParkourABPInterface.h"
+#include "ParkourStatsInterface.h"
 
-#include "DrawDebugHelpers.h"
-#include "Engine/World.h" 
-#include "CollisionQueryParams.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -45,6 +45,9 @@ void UParkourComponent::ParkourAction()
 				ShowHitResults();
 				CheckDistance();
 				ParkourType(false);
+				//CheckMantleSurface();
+				//CheckVaultSurface();
+
 			}
 		}
 	}
@@ -85,6 +88,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	bCanManualClimb = true;
 	bShowHitResult = true;
 	bDrawDebug = true;
+	bOnGround = true;
 	if (Character)
 	{
 		WidgetActor = Character->GetWorld()->SpawnActor<AWidgetActor>(AWidgetActor::StaticClass(), Character->GetActorLocation(), FRotator::ZeroRotator);
@@ -97,7 +101,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 				true
 			);
 			WidgetActor->AttachToComponent(Camera, AttachmentRules);
-			WidgetActor->SetActorRelativeLocation(FVector(60.0, 50.0, -3.0));
+			WidgetActor->SetActorRelativeLocation(FVector(100.0, 50.0, -3.0));
 		}
 		else
 			return false;
@@ -163,7 +167,7 @@ void UParkourComponent::ChekcWallShape()
 	FVector EndLocation;
 
 	int Index = CharacterMovement->IsFalling() ? 8 : 15;
-	
+
 	bool bShouldBreak = false;
 	for (int i = 0; i <= Index; ++i)
 	{
@@ -359,27 +363,19 @@ void UParkourComponent::ShowHitResults()
 {
 	if (bShowHitResult)
 	{
-
 		if (WallTopResult.bBlockingHit)
-		{
 			DrawDebugSphere(Character->GetWorld(), WallTopResult.ImpactPoint, 5.0f,
 				12, FColor::Blue, false, 1.0f);
-		}
 		if (WallDepthResult.bBlockingHit && !WallDepthResult.bStartPenetrating)
-		{
 			DrawDebugSphere(Character->GetWorld(), WallDepthResult.ImpactPoint, 5.0f,
 				12, FColor::Cyan, false, 1.0f);
-		}
 		if (WallVaultResult.bBlockingHit && !WallVaultResult.bStartPenetrating)
-		{
 			DrawDebugSphere(Character->GetWorld(), WallVaultResult.ImpactPoint, 5.0f,
 				12, FColor::Magenta, false, 1.0f);
-		}
 	}
-
 }
 
-bool UParkourComponent::CheckDistance()
+void UParkourComponent::CheckDistance()
 {
 	if (WallHitResult.bBlockingHit)
 	{
@@ -388,29 +384,200 @@ bool UParkourComponent::CheckDistance()
 		VaultHeight = .0f;
 
 		if (WallTopResult.bBlockingHit)
-		{
 			WallHeight = WallTopResult.ImpactPoint.Z - CharacterMesh->GetSocketLocation("root").Z;
-		}
-
 		if (WallTopResult.bBlockingHit && WallDepthResult.bBlockingHit)
-		{
 			WallDepth = FVector::Distance(WallTopResult.ImpactPoint, WallDepthResult.ImpactPoint);
-		}
-
 		if (WallDepthResult.bBlockingHit && WallVaultResult.bBlockingHit)
-		{
 			VaultHeight = WallDepthResult.ImpactPoint.Z - WallVaultResult.ImpactPoint.Z;
-		}
 
-
+		UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f"), WallHeight, WallDepth, VaultHeight);
 	}
-
-	return false;
 }
 
 void UParkourComponent::ParkourType(bool AutoClimb)
 {
+	if (!WallTopResult.bBlockingHit)
+	{
+		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+		if (!AutoClimb)
+		{
+			Character->Jump();
+		}
+		return;
+	}
+
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
+	{
+		if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
+		{
+			return;
+		}
+		return;
+	}
+
+	if (!bOnGround)
+	{
+		return;
+	}
+
+	if (WallHeight > 0 && WallHeight <= 44)
+	{
+		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+		return;
+	}
+
+	if (WallHeight >= 250)
+	{
+		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+		return;
+	}
+
+	if (WallHeight > 44 && WallHeight <= 90)
+	{
+		if (CheckMantleSurface())
+		{
+			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.LowMantle"));
+		}
+		else
+		{
+			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+		}
+		return;
+	}
+
+	if (WallHeight > 90 && WallHeight <= 120 && WallDepth >= 0 && WallDepth <= 120)
+	{
+		if (VaultHeight >= 60 && VaultHeight <= 120 && WallDepth <= 30)
+		{
+			if (CheckVaultSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ThinVault"));
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			}
+		}
+		else if (CharacterMovement->Velocity.Length() > 20)
+		{
+			if (CheckVaultSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			}
+		}
+		else
+		{
+			if (CheckMantleSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			}
+		}
+		return;
+	}
+
+	if (WallHeight > 120 && WallHeight <= 160 && WallDepth > 0 && WallDepth <= 120)
+	{
+		if (VaultHeight >= 60 && VaultHeight <= 120 && CharacterMovement->Velocity.Length() > 20)
+		{
+			if (CheckVaultSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.HighVault"));
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			}
+		}
+		else
+		{
+			if (CheckMantleSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			}
+		}
+		return;
+	}
 }
 
+void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
+{
+	if (ParkourActionTag == NewParkourAction)
+		return;
 
+	ParkourActionTag = NewParkourAction;
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+	
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetParkourAction(AnimInstance, NewParkourAction);
+
+	if (!WidgetActor->WidgetComponent->GetWidget()->GetClass()->ImplementsInterface(UParkourStatsInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: Widget does not implement the Stats interface"));
+		return;
+	}
+
+	IParkourStatsInterface* ParkourStatsInterface = Cast<IParkourStatsInterface>(WidgetActor->WidgetComponent->GetWidget());
+	ParkourStatsInterface->Execute_SetParkourAction(WidgetActor->WidgetComponent->GetWidget(), NewParkourAction.GetTagName().ToString());
+}
+
+bool UParkourComponent::CheckMantleSurface()
+{
+	FVector StartLocation = WallTopResult.ImpactPoint + FVector(0.0f, 0.0f, CapsuleComponent->GetUnscaledCapsuleHalfHeight() + 8.0f);
+	FVector EndLocation = StartLocation;
+	float HalfHeight = CapsuleComponent->GetUnscaledCapsuleHalfHeight() - 8.0f;
+	float Radius = 25.0f;
+
+	FCollisionQueryParams TraceParams(FName(TEXT("CapsuleTrace")));
+
+	FHitResult HitResult;
+	Character->GetWorld()->SweepSingleByChannel(HitResult, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(Radius, HalfHeight), TraceParams);
+	if (bDrawDebug)
+	{
+		if (HitResult.bBlockingHit)
+			DrawDebugCapsule(Character->GetWorld(), HitResult.ImpactPoint, Radius, HalfHeight, FQuat::Identity, FColor::Red, false, 2.0f);
+		DrawDebugCapsule(Character->GetWorld(), StartLocation, Radius, HalfHeight, FQuat::Identity, FColor::Green, false, 2.0f);
+
+	}
+
+	return !HitResult.bBlockingHit;
+}
+
+bool UParkourComponent::CheckVaultSurface()
+{
+	FVector StartLocation = WallTopResult.ImpactPoint + FVector(0.0f, 0.0f, (CapsuleComponent->GetUnscaledCapsuleHalfHeight() / 2) + 18.0f);
+	FVector EndLocation = StartLocation;
+	float HalfHeight = (CapsuleComponent->GetUnscaledCapsuleHalfHeight() / 2) + 5.0f;
+	float Radius = 25.0f;
+
+	FCollisionQueryParams TraceParams(FName(TEXT("CapsuleTrace")));
+
+	FHitResult HitResult;
+	Character->GetWorld()->SweepSingleByChannel(HitResult, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(Radius, HalfHeight), TraceParams);
+	if (bDrawDebug)
+	{
+		if (HitResult.bBlockingHit)
+			DrawDebugCapsule(Character->GetWorld(), HitResult.ImpactPoint, Radius, HalfHeight, FQuat::Identity, FColor::Red, false, 2.0f);
+		DrawDebugCapsule(Character->GetWorld(), StartLocation, Radius, HalfHeight, FQuat::Identity, FColor::Green, false, 2.0f);
+
+	}
+
+	return !HitResult.bBlockingHit;
+}
 
