@@ -145,6 +145,9 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	else
 		return false;
 
+	if (AnimInstance)
+		AnimInstance->OnMontageEnded.AddDynamic(this, &UParkourComponent::OnParkourMontageBlendOut);
+
 
 
 	if (CameraBoom)
@@ -157,7 +160,6 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 
 	return true;
 }
-
 
 void UParkourComponent::ChekcWallShape()
 {
@@ -558,6 +560,11 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	{
 		ParkourVariables = NewObject<ULowMantleDT>();
 	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
+	{
+		ResetParkourResults();
+		return;
+	}
 
 	PlayParkourMontage();
 }
@@ -593,22 +600,20 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Mantle"))
 	{
-		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, .0f, 500.0f), true, false);
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, 500.0f, .0f), true, false);
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Vault"))
 	{
-		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, .0f, 500.0f), true, false);
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, 500.0f, .0f), true, false);
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.ReachLedge"))
 	{
-		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, .0f, 500.0f), true, false);
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, 500.0f, .0f), true, false);
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
 	{
-		SetUpParkourSettings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, FRotator(.0f, .0f, 500.0f), true, false);
+		SetUpParkourSettings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, FRotator(.0f, 500.0f, .0f), true, false);
 	}
-
-	PlayParkourMontage();
 }
 
 void UParkourComponent::SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately)
@@ -670,55 +675,55 @@ void UParkourComponent::PlayParkourMontage()
 {
 	SetParkourState(FGameplayTag::RequestGameplayTag("Parkour.State.Vault"));
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour1", FindWarp1Location(.0f, .0f), WallRotation);
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour1", FindWarpLocation(WallTopResult.ImpactPoint, -70.0f, -60.0f), WallRotation);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour2", FindWarp2Location(.0f, .0f), WallRotation);
-	
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour3", FindWarp3Location(.0f, .0f), WallRotation);
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour2", FindWarpLocation(WallDepthResult.ImpactPoint, -30.0f, -45.0f), WallRotation);
 
-	UAnimMontage* AnimMontage;
-	AnimInstance->OnMontageEnded.AddDynamic(this, &UParkourComponent::OnMontageBlendOut);
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour3", FindWarpLocation(WallVaultResult.ImpactPoint, 0.0f, 3.0f), WallRotation);
+
+
+	//TODO: try to load all montages before hand in special class that will contain things like widget, montages, etc
+	FStringAssetReference MontageReference(TEXT("/ParkourSystem/Animations/ParkourAnimations/Mantle/VaultUE5_Montage"));
+	UAnimMontage* AnimMontage = Cast<UAnimMontage>(MontageReference.TryLoad());
+	if (!AnimMontage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayParkourMontage: AnimMontage wasn't found"));
+		return;
+	}
 	AnimInstance->Montage_Play(AnimMontage);
-
 }
 
-void UParkourComponent::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
+
+
+void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
 {
+	if (bInterrupted)
+		return;
+
 	SetParkourState(FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy"));
 	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-	AnimInstance->OnMontageEnded.Clear();
 }
 
-FVector UParkourComponent::FindWarp1Location(float Warp1XOffset, float Warp1ZOffset) const
+FVector UParkourComponent::FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const
 {
-	FVector result = WallTopResult.ImpactPoint;
-	result.Z += Warp1ZOffset;
+	FVector Result = ImpactPoint;
+	Result.Z += ZOffset;
 
 	FQuat QuatRotation = FQuat(WallRotation);
-	result += QuatRotation.RotateVector(FVector::ForwardVector) * Warp1XOffset;
+	Result += QuatRotation.RotateVector(FVector::ForwardVector) * XOffset;
 
-	return result;
+	return Result;
 }
 
-FVector UParkourComponent::FindWarp2Location(float Warp2XOffset, float Warp2ZOffset) const
+void UParkourComponent::ResetParkourResults()
 {
-	FVector result = WallTopResult.ImpactPoint;
-	result.Z += Warp2ZOffset;
+	HopHitTraces.Empty();
+	WallHitTraces.Empty();
+	WallHitResult = FHitResult();
+	WallTopResult = FHitResult();
+	WallDepthResult = FHitResult();
+	WallVaultResult = FHitResult();
+	TopHits = FHitResult();
 
-	FQuat QuatRotation = FQuat(WallRotation);
-	result += QuatRotation.RotateVector(FVector::ForwardVector) * Warp2XOffset;
-
-	return result;
-}
-
-FVector UParkourComponent::FindWarp3Location(float Warp3XOffset, float Warp3ZOffset) const
-{
-	FVector result = WallVaultResult.ImpactPoint;
-	result.Z += Warp3ZOffset;
-
-	FQuat QuatRotation = FQuat(WallRotation);
-	result += QuatRotation.RotateVector(FVector::ForwardVector) * Warp3XOffset;
-
-	return result;
 }
 

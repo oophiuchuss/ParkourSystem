@@ -43,7 +43,7 @@ public:
 	virtual bool SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera) override;
 
 	UFUNCTION()
-	void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
+	void OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 private:
 
 	void ChekcWallShape();
@@ -70,11 +70,9 @@ private:
 
 	void PlayParkourMontage();
 
-	FVector FindWarp1Location(float Warp1XOffset, float Warp1ZOffset) const;
-	
-	FVector FindWarp2Location(float Warp2XOffset, float Warp2ZOffset) const;
+	FVector FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
 
-	FVector FindWarp3Location(float Warp3XOffset, float Warp3ZOffset) const;
+	void ResetParkourResults();
 
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
