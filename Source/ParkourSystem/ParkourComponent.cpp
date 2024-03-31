@@ -88,7 +88,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	bCanAutoClimb = true;
 	bCanManualClimb = true;
 	bShowHitResult = true;
-	bDrawDebug = true;
+	bDrawDebug = false;
 	bOnGround = true;
 	if (Character)
 	{
@@ -637,13 +637,12 @@ bool UParkourComponent::CheckMantleSurface()
 	FCollisionQueryParams TraceParams(FName(TEXT("CapsuleTrace")));
 
 	FHitResult HitResult;
-	Character->GetWorld()->SweepSingleByChannel(HitResult, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeCapsule(Radius, HalfHeight), TraceParams);
+	Character->GetWorld()->SweepSingleByChannel(HitResult, StartLocation, EndLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeBox(FVector(20.0f)), TraceParams);
 	if (bDrawDebug)
 	{
-		if (HitResult.bBlockingHit)
-			DrawDebugCapsule(Character->GetWorld(), HitResult.ImpactPoint, Radius, HalfHeight, FQuat::Identity, FColor::Red, false, 2.0f);
-		DrawDebugCapsule(Character->GetWorld(), StartLocation, Radius, HalfHeight, FQuat::Identity, FColor::Green, false, 2.0f);
-
+		if (HitResult.bBlockingHit || HitResult.bStartPenetrating)
+			DrawDebugCapsule(Character->GetWorld(), HitResult.ImpactPoint, HalfHeight, Radius, FQuat::Identity, FColor::Red, false, 2.0f);
+		DrawDebugCapsule(Character->GetWorld(), StartLocation, HalfHeight, Radius, FQuat::Identity, FColor::Green, false, 2.0f);
 	}
 
 	return !HitResult.bBlockingHit;
@@ -663,8 +662,8 @@ bool UParkourComponent::CheckVaultSurface()
 	if (bDrawDebug)
 	{
 		if (HitResult.bBlockingHit)
-			DrawDebugCapsule(Character->GetWorld(), HitResult.ImpactPoint, Radius, HalfHeight, FQuat::Identity, FColor::Red, false, 2.0f);
-		DrawDebugCapsule(Character->GetWorld(), StartLocation, Radius, HalfHeight, FQuat::Identity, FColor::Green, false, 2.0f);
+			DrawDebugCapsule(Character->GetWorld(), HitResult.ImpactPoint, HalfHeight, Radius, FQuat::Identity, FColor::Red, false, 2.0f);
+		DrawDebugCapsule(Character->GetWorld(), StartLocation, HalfHeight, Radius, FQuat::Identity, FColor::Green, false, 2.0f);
 
 	}
 
@@ -683,7 +682,10 @@ void UParkourComponent::PlayParkourMontage()
 
 	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour3",
 		FindWarpLocation(WallVaultResult.ImpactPoint, ParkourVariables->Warp3XOffset, ParkourVariables->Warp3ZOffset), WallRotation);
-
+	
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour4",
+		FindWarpLocation(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
+	
 
 	UAnimMontage* AnimMontage = ParkourVariables->ParkourMontage;
 	if (!AnimMontage)
@@ -703,7 +705,8 @@ void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bIn
 	if (bInterrupted)
 		return;
 
-	SetParkourState(ParkourVariables->ParkourOutState);
+	//TODO There should be ParkourVariables pointer
+	SetParkourState(FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy"));
 	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
 }
 

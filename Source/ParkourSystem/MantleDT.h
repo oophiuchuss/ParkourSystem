@@ -14,4 +14,7 @@ class PARKOURSYSTEM_API UMantleDT : public UParkourVariables
 {
 	GENERATED_BODY()
 	
+
+public:
+	UMantleDT();
 };
