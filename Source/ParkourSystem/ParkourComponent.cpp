@@ -673,24 +673,27 @@ bool UParkourComponent::CheckVaultSurface()
 
 void UParkourComponent::PlayParkourMontage()
 {
-	SetParkourState(FGameplayTag::RequestGameplayTag("Parkour.State.Vault"));
+	SetParkourState(ParkourVariables->ParkourInState);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour1", FindWarpLocation(WallTopResult.ImpactPoint, -70.0f, -60.0f), WallRotation);
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour1",
+		FindWarpLocation(WallTopResult.ImpactPoint, ParkourVariables->Warp1XOffset, ParkourVariables->Warp1ZOffset), WallRotation);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour2", FindWarpLocation(WallDepthResult.ImpactPoint, -30.0f, -45.0f), WallRotation);
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour2",
+		FindWarpLocation(WallDepthResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour3", FindWarpLocation(WallVaultResult.ImpactPoint, 0.0f, 3.0f), WallRotation);
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour3",
+		FindWarpLocation(WallVaultResult.ImpactPoint, ParkourVariables->Warp3XOffset, ParkourVariables->Warp3ZOffset), WallRotation);
 
 
-	//TODO: try to load all montages before hand in special class that will contain things like widget, montages, etc
-	FStringAssetReference MontageReference(TEXT("/ParkourSystem/Animations/ParkourAnimations/Mantle/VaultUE5_Montage"));
-	UAnimMontage* AnimMontage = Cast<UAnimMontage>(MontageReference.TryLoad());
+	UAnimMontage* AnimMontage = ParkourVariables->ParkourMontage;
 	if (!AnimMontage)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlayParkourMontage: AnimMontage wasn't found"));
 		return;
 	}
-	AnimInstance->Montage_Play(AnimMontage);
+	float StartTimeInSeconds = ParkourVariables->MontageStartPosition;
+
+	AnimInstance->Montage_Play(AnimMontage, 1.0f, EMontagePlayReturnType::MontageLength, StartTimeInSeconds);
 }
 
 
@@ -700,9 +703,10 @@ void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bIn
 	if (bInterrupted)
 		return;
 
-	SetParkourState(FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy"));
+	SetParkourState(ParkourVariables->ParkourOutState);
 	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
 }
+
 
 FVector UParkourComponent::FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const
 {

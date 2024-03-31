@@ -14,4 +14,6 @@ class PARKOURSYSTEM_API UVaultDT : public UParkourVariables
 {
 	GENERATED_BODY()
 	
+public:
+	UVaultDT();
 };
