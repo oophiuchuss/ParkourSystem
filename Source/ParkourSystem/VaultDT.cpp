@@ -5,7 +5,7 @@
 
 UVaultDT::UVaultDT()
 {
-	FString path = "/ParkourSystem/Animations/ParkourAnimations/Mantle/VaultUE5_Montage";
+	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/VaultUE5_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
 	if (MontageAsset.Succeeded())
 	{

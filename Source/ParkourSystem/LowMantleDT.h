@@ -14,4 +14,6 @@ class PARKOURSYSTEM_API ULowMantleDT : public UParkourVariables
 {
 	GENERATED_BODY()
 	
+public:
+	ULowMantleDT();
 };

@@ -87,8 +87,8 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	bAutoClimb = false;
 	bCanAutoClimb = true;
 	bCanManualClimb = true;
-	bShowHitResult = true;
-	bDrawDebug = true;
+	bShowHitResult = false;
+	bDrawDebug = false;
 	bOnGround = true;
 	if (Character)
 	{
@@ -170,12 +170,12 @@ void UParkourComponent::ChekcWallShape()
 	FVector StartLocation;
 	FVector EndLocation;
 
-	int Index = CharacterMovement->IsFalling() ? 8 : 15;
+	int32 Index = CharacterMovement->IsFalling() ? 8 : 15;
 
 	bool bShouldBreak = false;
-	for (int i = 0; i <= Index; ++i)
+	for (int32 i = 0; i <= Index; ++i)
 	{
-		for (int j = 0; j <= 11; ++j)
+		for (int32 j = 0; j <= 11; ++j)
 		{
 			StartLocation = Character->GetActorLocation() + FVector(0.0f, 0.0f, (i * 16.0f) - 60.0f) +
 				(Character->GetActorForwardVector() * (-20.0f));
@@ -204,7 +204,7 @@ void UParkourComponent::ChekcWallShape()
 
 	Index = UParkourFunctionLibrary::SelectParkourStateFloat(4.0f, .0f, .0f, 2.0f, ParkourStateTag);
 
-	for (size_t i = 0; i <= Index; i++)
+	for (int32 i = 0; i <= Index; i++)
 	{
 		FVector ImpactPoint = HitResult.ImpactPoint;
 		if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
@@ -225,7 +225,7 @@ void UParkourComponent::ChekcWallShape()
 
 		int InnerIndex = UParkourFunctionLibrary::SelectParkourStateFloat(30.0f, .0f, .0f, 7.0f, ParkourStateTag);
 
-		for (size_t k = 0; k <= InnerIndex; k++)
+		for (int32 k = 0; k <= InnerIndex; k++)
 		{
 			StartLocation = LineHitResult.TraceStart + FVector(0.0f, 0.0f, k * 8.0f);
 			EndLocation = LineHitResult.TraceEnd + FVector(0.0f, 0.0f, k * 8.0f);
@@ -234,21 +234,20 @@ void UParkourComponent::ChekcWallShape()
 
 			HopHitTraces.Add(CloneLineHitResult);
 		}
-	}
 
-	//TODO should be in the center, not on the corner
-	for (int32 i = 1; i < HopHitTraces.Num(); ++i)
-	{
-		float Distance1 = HopHitTraces[i].bBlockingHit ? HopHitTraces[i].Distance : FVector::Distance(HopHitTraces[i].TraceStart, HopHitTraces[i].TraceEnd);
-		float Distance2 = HopHitTraces[i - 1].bBlockingHit ? HopHitTraces[i - 1].Distance : FVector::Distance(HopHitTraces[i - 1].TraceStart, HopHitTraces[i - 1].TraceEnd);
-
-		if (Distance1 - Distance2 > 5.0f)
+		//TODO should be in the center, not on the corner
+		for (int32 j = 1; j < HopHitTraces.Num(); ++j)
 		{
-			WallHitTraces.Add(HopHitTraces[i - 1]);
-			break;
+			float Distance1 = HopHitTraces[j].bBlockingHit ? HopHitTraces[j].Distance : FVector::Distance(HopHitTraces[j].TraceStart, HopHitTraces[j].TraceEnd);
+			float Distance2 = HopHitTraces[j - 1].bBlockingHit ? HopHitTraces[j - 1].Distance : FVector::Distance(HopHitTraces[j - 1].TraceStart, HopHitTraces[j - 1].TraceEnd);
+
+			if (Distance1 - Distance2 > 5.0f)
+			{
+				WallHitTraces.Add(HopHitTraces[j - 1]);
+				break;
+			}
 		}
 	}
-
 	if (WallHitTraces.Num() != 0)
 	{
 

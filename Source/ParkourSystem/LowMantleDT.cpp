@@ -3,3 +3,27 @@
 
 #include "LowMantleDT.h"
 
+ULowMantleDT::ULowMantleDT()
+{
+	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/LowMantleUE5_Montage";
+	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
+	if (MontageAsset.Succeeded())
+	{
+		ParkourMontage = MontageAsset.Object;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ULowMantleDT: AnimMontage wasn't found"));
+	}
+
+	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.Mantle");
+	ParkourOutState = FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy");
+
+	Warp1XOffset = -40.0f;
+	Warp1ZOffset = -40.0;
+	Warp2XOffset = 15.0f;
+	Warp2ZOffset = 2.0f;
+	Warp3XOffset = 0.0f;
+	Warp3ZOffset = 0.0f;
+	MontageStartPosition = 0.2f;
+}

@@ -5,7 +5,7 @@
 
 UThinVaultDT::UThinVaultDT()
 {
-	FString path = "/ParkourSystem/Animations/ParkourAnimations/Mantle/ThinVaultUE5_Montage";
+	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/ThinVaultUE5_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
 	if (MontageAsset.Succeeded())
 	{
