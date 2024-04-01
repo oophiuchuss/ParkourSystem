@@ -13,5 +13,7 @@ UCLASS()
 class PARKOURSYSTEM_API UThinVaultDT : public UParkourVariables
 {
 	GENERATED_BODY()
-	
+
+public:
+	UThinVaultDT();
 };

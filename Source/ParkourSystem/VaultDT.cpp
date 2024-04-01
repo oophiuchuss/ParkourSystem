@@ -13,7 +13,7 @@ UVaultDT::UVaultDT()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayParkourMontage: AnimMontage wasn't found"));
+		UE_LOG(LogTemp, Warning, TEXT("UVaultDT: AnimMontage wasn't found"));
 	}
 
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.Vault");

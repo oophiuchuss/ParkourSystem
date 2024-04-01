@@ -13,7 +13,7 @@ UMantleDT::UMantleDT()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayParkourMontage: AnimMontage wasn't found"));
+		UE_LOG(LogTemp, Warning, TEXT("UMantleDT: AnimMontage wasn't found"));
 	}
 
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.Mantle");

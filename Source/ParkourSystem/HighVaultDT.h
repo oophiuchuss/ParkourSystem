@@ -4,14 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "ParkourVariables.h"
-#include "HightVaultDT.generated.h"
+#include "HighVaultDT.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PARKOURSYSTEM_API UHightVaultDT : public UParkourVariables
+class PARKOURSYSTEM_API UHighVaultDT : public UParkourVariables
 {
 	GENERATED_BODY()
-	
+
+public:
+	UHighVaultDT();
 };

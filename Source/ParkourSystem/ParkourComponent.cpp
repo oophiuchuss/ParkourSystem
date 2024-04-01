@@ -11,7 +11,7 @@
 #include "ParkourStatsInterface.h"
 #include "ThinVaultDT.h"
 #include "VaultDT.h"
-#include "HightVaultDT.h"
+#include "HighVaultDT.h"
 #include "MantleDT.h"
 #include "LowMantleDT.h"
 
@@ -146,7 +146,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 		return false;
 
 	if (AnimInstance)
-		AnimInstance->OnMontageEnded.AddDynamic(this, &UParkourComponent::OnParkourMontageBlendOut);
+		AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UParkourComponent::OnParkourMontageBlendOut);
 
 
 
@@ -236,6 +236,7 @@ void UParkourComponent::ChekcWallShape()
 		}
 	}
 
+	//TODO should be in the center, not on the corner
 	for (int32 i = 1; i < HopHitTraces.Num(); ++i)
 	{
 		float Distance1 = HopHitTraces[i].bBlockingHit ? HopHitTraces[i].Distance : FVector::Distance(HopHitTraces[i].TraceStart, HopHitTraces[i].TraceEnd);
@@ -449,43 +450,48 @@ void UParkourComponent::ParkourType(bool AutoClimb)
 		return;
 	}
 
-	if (WallHeight > 90 && WallHeight <= 120 && VaultHeight >= 60 && VaultHeight <= 120 && WallDepth >= 0)
+	if (WallHeight > 90 && WallHeight <= 160 && VaultHeight <= 160 && WallDepth >= 0 && WallDepth <= 120)
 	{
-		if (WallDepth <= 30)
+		if (WallHeight <= 120 && VaultHeight <= 120 && WallDepth <= 30)
 		{
 			if (CheckVaultSurface())
-			{
 				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ThinVault"));
-
-			}
 			else
-			{
 				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
 
-			}
 			return;
 		}
 
-		if (WallDepth <= 120 && CharacterMovement->Velocity.Length() > 20)
+		if (WallDepth >= 0 && WallDepth <= 120 && CharacterMovement->Velocity.Length() > 20)
 		{
-			if (CheckVaultSurface())
+			if (WallHeight <= 120 && VaultHeight <= 120)
 			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
+				if (CheckVaultSurface())
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
+				else
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+
+				return;
 			}
-			else
+
+			if (WallHeight > 120 && WallHeight <= 160 && VaultHeight <= 160)
 			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+				if (CheckVaultSurface())
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.HighVault"));
+				else
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+
+				return;
 			}
-			return;
 		}
 	}
 
-	if(WallHeight > 90 && WallHeight <= 160)
+	if (WallHeight > 90 && WallHeight <= 160)
 		if (CheckMantleSurface())
 			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
 		else
 			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-	
+
 	/*if (WallHeight > 90 && WallHeight <= 120)
 	{
 		if (WallDepth >= 0 && WallDepth <= 120)
@@ -636,8 +642,6 @@ void UParkourComponent::ParkourType(bool AutoClimb)
 			}
 		}
 	}*/
-
-
 	/*if (WallHeight > 44 && WallHeight <= 90)
 	{
 		if (CheckMantleSurface())
@@ -746,9 +750,9 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	{
 		ParkourVariables = NewObject<UThinVaultDT>();
 	}
-	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.HightVault"))
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.HighVault"))
 	{
-		ParkourVariables = NewObject<UHightVaultDT>();
+		ParkourVariables = NewObject<UHighVaultDT>();
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Vault"))
 	{
