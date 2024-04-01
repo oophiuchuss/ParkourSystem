@@ -48,9 +48,9 @@ private:
 
 	void ChekcWallShape();
 
-	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel);
+	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel) const;
 
-	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel);
+	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel) const;
 
 	void ShowHitResults();
 
@@ -71,6 +71,8 @@ private:
 	void PlayParkourMontage();
 
 	FVector FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
+
+	FVector FindWarpLocationChecked(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
 
 	void ResetParkourResults();
 

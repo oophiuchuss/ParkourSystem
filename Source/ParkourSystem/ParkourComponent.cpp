@@ -88,7 +88,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	bCanAutoClimb = true;
 	bCanManualClimb = true;
 	bShowHitResult = true;
-	bDrawDebug = false;
+	bDrawDebug = true;
 	bOnGround = true;
 	if (Character)
 	{
@@ -329,7 +329,7 @@ void UParkourComponent::ChekcWallShape()
 	}
 }
 
-void UParkourComponent::PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel)
+void UParkourComponent::PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel) const
 {
 	if (!World)
 	{
@@ -348,7 +348,7 @@ void UParkourComponent::PerformSphereTraceByChannel(UWorld* World, FHitResult& H
 	}
 }
 
-void UParkourComponent::PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel)
+void UParkourComponent::PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel) const
 {
 	World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, CollisionChannel);
 
@@ -394,7 +394,7 @@ void UParkourComponent::CheckDistance()
 		if (WallDepthResult.bBlockingHit && WallVaultResult.bBlockingHit)
 			VaultHeight = WallDepthResult.ImpactPoint.Z - WallVaultResult.ImpactPoint.Z;
 
-		UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f"), WallHeight, WallDepth, VaultHeight);
+		UE_LOG(LogTemp, Log, TEXT("WallHeight: %f, WallDepth: %f, VaultHeight: %f"), WallHeight, WallDepth, VaultHeight);
 	}
 }
 
@@ -436,7 +436,209 @@ void UParkourComponent::ParkourType(bool AutoClimb)
 		return;
 	}
 
-	if (WallHeight > 44 && WallHeight <= 90)
+	if (WallHeight > 44 && WallHeight < 90)
+	{
+		if (CheckMantleSurface())
+		{
+			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.LowMantle"));
+		}
+		else
+		{
+			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+		}
+		return;
+	}
+
+	if (WallHeight > 90 && WallHeight <= 120 && VaultHeight >= 60 && VaultHeight <= 120 && WallDepth >= 0)
+	{
+		if (WallDepth <= 30)
+		{
+			if (CheckVaultSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ThinVault"));
+
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+
+			}
+			return;
+		}
+
+		if (WallDepth <= 120 && CharacterMovement->Velocity.Length() > 20)
+		{
+			if (CheckVaultSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			}
+			return;
+		}
+	}
+
+	if(WallHeight > 90 && WallHeight <= 160)
+		if (CheckMantleSurface())
+			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+		else
+			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+	
+	/*if (WallHeight > 90 && WallHeight <= 120)
+	{
+		if (WallDepth >= 0 && WallDepth <= 120)
+		{
+			if (VaultHeight >= 60 && VaultHeight <= 120)
+			{
+				if (WallDepth >= 0 && WallDepth <= 30)
+				{
+					if (CheckVaultSurface())
+					{
+						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ThinVault"));
+						return;
+					}
+					else
+					{
+						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+						return;
+					}
+
+				}
+				else
+					if (CharacterMovement->Velocity.Length() > 20)
+					{
+						if (CheckVaultSurface())
+						{
+							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
+							return;
+						}
+						else
+						{
+							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+							return;
+						}
+					}
+					else
+						if (CheckMantleSurface())
+						{
+							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+							return;
+						}
+						else
+						{
+							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+							return;
+						}
+
+			}
+			else
+				if (CheckMantleSurface())
+				{
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+					return;
+				}
+				else
+				{
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+					return;
+				}
+		}
+		else
+			if (CheckMantleSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+				return;
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+				return;
+			}
+	}
+	else
+	{
+		if (WallHeight > 44 && WallHeight <= 90)
+		{
+			if (CheckMantleSurface())
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.LowMantle"));
+			}
+			else
+			{
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			}
+		}
+		else
+		{
+			if (WallHeight > 120 && WallHeight <= 160)
+			{
+				if (WallDepth > 0 && WallDepth <= 120)
+				{
+					if (VaultHeight >= 60 && VaultHeight <= 120)
+					{
+						if (CharacterMovement->Velocity.Length() > 20)
+						{
+							if (CheckVaultSurface())
+							{
+								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
+								return;
+							}
+							else
+							{
+								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+								return;
+							}
+						}
+						else
+						{
+							if (CheckMantleSurface())
+							{
+								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+								return;
+							}
+							else
+							{
+								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+								return;
+							}
+						}
+					}
+					else
+					{
+						if (CheckMantleSurface())
+						{
+							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+							return;
+						}
+						else
+						{
+							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+							return;
+						}
+					}
+				}
+				else
+				{
+					if (CheckMantleSurface())
+					{
+						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+						return;
+					}
+					else
+					{
+						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+						return;
+					}
+
+				}
+			}
+		}
+	}*/
+
+
+	/*if (WallHeight > 44 && WallHeight <= 90)
 	{
 		if (CheckMantleSurface())
 		{
@@ -512,7 +714,7 @@ void UParkourComponent::ParkourType(bool AutoClimb)
 			}
 		}
 		return;
-	}
+	}*/
 }
 
 void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
@@ -682,10 +884,10 @@ void UParkourComponent::PlayParkourMontage()
 
 	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour3",
 		FindWarpLocation(WallVaultResult.ImpactPoint, ParkourVariables->Warp3XOffset, ParkourVariables->Warp3ZOffset), WallRotation);
-	
+
 	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour4",
-		FindWarpLocation(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
-	
+		FindWarpLocationChecked(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
+
 
 	UAnimMontage* AnimMontage = ParkourVariables->ParkourMontage;
 	if (!AnimMontage)
@@ -721,6 +923,21 @@ FVector UParkourComponent::FindWarpLocation(const FVector& ImpactPoint, float XO
 
 	return Result;
 }
+
+FVector UParkourComponent::FindWarpLocationChecked(const FVector& ImpactPoint, float XOffset, float ZOffset) const
+{
+	FVector StartLocation = ImpactPoint + WallRotation.RotateVector(FVector::ForwardVector) * XOffset + FVector(0.0f, 0.0f, 40.0f);
+
+	FHitResult HitResult;
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, StartLocation - FVector(0.0f, 0.0f, 60.0f), 25.0f, ECC_Visibility);
+
+	FVector AdjustedImpactPoint = HitResult.bBlockingHit ? HitResult.ImpactPoint : ImpactPoint;
+
+	AdjustedImpactPoint.Z += ZOffset;
+
+	return AdjustedImpactPoint;
+}
+
 
 void UParkourComponent::ResetParkourResults()
 {
