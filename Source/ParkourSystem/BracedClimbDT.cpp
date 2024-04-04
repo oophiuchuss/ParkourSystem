@@ -16,7 +16,7 @@ UBracedClimbDT::UBracedClimbDT()
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.ReachLedge");
 	ParkourOutState = FGameplayTag::RequestGameplayTag("Parkour.State.Climb");
 
-	Warp1XOffset = 20.0f;
+	Warp1XOffset = -50.0f;
 	Warp1ZOffset = -180.0;
 	Warp2XOffset = 0.0f;
 	Warp2ZOffset = 0.0f;

@@ -27,36 +27,6 @@ UParkourComponent::UParkourComponent()
 	// ...
 }
 
-//TODO: there sould be bool
-void UParkourComponent::ParkourAction()
-{
-	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
-	{
-
-		if (bAutoClimb)
-		{
-			if (bCanAutoClimb)
-			{
-				ChekcWallShape();
-				ShowHitResults();
-				CheckDistance();
-				ParkourType(false);
-			}
-		}
-		else
-		{
-			if (bCanManualClimb)
-			{
-				ChekcWallShape();
-				ShowHitResults();
-				CheckDistance();
-				ParkourType(false);
-			}
-		}
-	}
-
-}
-
 // Called when the game starts
 void UParkourComponent::BeginPlay()
 {
@@ -135,11 +105,12 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 		{
 			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 			{
-				Subsystem->AddMappingContext(ParkourMappingContext, 0);
+				Subsystem->AddMappingContext(ParkourMappingContext, 1);
 
 				if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent))
 				{
 					EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &UParkourComponent::ParkourAction);
+					EnhancedInputComponent->BindAction(ParkourMoveInputAction, ETriggerEvent::Triggered, this, &UParkourComponent::Move);
 				}
 			}
 		}
@@ -162,6 +133,36 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 		return false;
 
 	return true;
+}
+
+//TODO: there sould be bool
+void UParkourComponent::ParkourAction()
+{
+	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
+	{
+
+		if (bAutoClimb)
+		{
+			if (bCanAutoClimb)
+			{
+				ChekcWallShape();
+				ShowHitResults();
+				CheckDistance();
+				ParkourType(false);
+			}
+		}
+		else
+		{
+			if (bCanManualClimb)
+			{
+				ChekcWallShape();
+				ShowHitResults();
+				CheckDistance();
+				ParkourType(false);
+			}
+		}
+	}
+
 }
 
 void UParkourComponent::ChekcWallShape()
@@ -498,7 +499,7 @@ void UParkourComponent::ParkourType(bool AutoClimb)
 			CheckClimbStyle();
 			SecondClimbLedgeResultCalculation();
 
-			if(ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+			if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
 				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
 			else
 				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
@@ -970,8 +971,8 @@ void UParkourComponent::SecondClimbLedgeResultCalculation()
 	FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(WallHitResult.ImpactNormal));
 	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
-	FVector StartLocation = WallHitResult.ImpactPoint + (ForwardVector * 30.0f);
-	FVector EndLocation = WallHitResult.ImpactPoint - (ForwardVector * 30.0f);
+	FVector StartLocation = WallHitResult.ImpactPoint - (ForwardVector * 30.0f);
+	FVector EndLocation = WallHitResult.ImpactPoint + (ForwardVector * 30.0f);
 
 	PerformSphereTraceByChannel(Character->GetWorld(), SecondClimbLedgeResult, StartLocation, EndLocation, 5.0f, ECC_Visibility);
 
@@ -984,7 +985,7 @@ void UParkourComponent::SecondClimbLedgeResultCalculation()
 
 	StartLocation = SecondClimbLedgeResult.ImpactPoint + (ForwardVector * 2.0f) + FVector(0.0f, 0.0f, 5.0f);
 	EndLocation = StartLocation - FVector(0.0f, 0.0f, 55.0f);
-	
+
 	FHitResult HitResult;
 	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility);
 
@@ -1018,6 +1019,40 @@ void UParkourComponent::PlayParkourMontage()
 	float StartTimeInSeconds = ParkourVariables->MontageStartPosition;
 
 	AnimInstance->Montage_Play(AnimMontage, 1.0f, EMontagePlayReturnType::MontageLength, StartTimeInSeconds);
+}
+
+void UParkourComponent::Move(const FInputActionValue& Value)
+{
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (Character->GetController() == nullptr)
+		return;
+
+	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.ReachLedge"))
+		bFirstClimbMove = false;
+
+	RightScale = MovementVector.Y;
+	ForwardScale = MovementVector.X;
+
+	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
+	{
+		const FRotator Rotation = Character->GetController()->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		Character->AddMovementInput(ForwardDirection, MovementVector.Y);
+		Character->AddMovementInput(RightDirection, MovementVector.X);
+	}
+	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
+	{
+
+	}
+
+
+
 }
 
 void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)

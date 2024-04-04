@@ -13,6 +13,7 @@
 #include "Components/ActorComponent.h"
 #include "ParkourComponent.generated.h"
 
+struct FInputActionValue;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PARKOURSYSTEM_API UParkourComponent : public UActorComponent, public IParkourInterface
@@ -28,9 +29,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourInputAction;
-
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void ParkourAction();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* ParkourMoveInputAction;
 
 protected:
 	// Called when the game starts
@@ -45,6 +46,7 @@ public:
 	UFUNCTION()
 	void OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 private:
+	void ParkourAction();
 
 	void ChekcWallShape();
 
@@ -84,6 +86,8 @@ private:
 
 	void ResetParkourResults();
 
+	void Move(const FInputActionValue& Value);
+
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
 	USkeletalMeshComponent* CharacterMesh;
@@ -98,6 +102,8 @@ private:
 	float ArrowLocationZ;
 	float CharacterHeight;
 	float FirstTargetArmLenght;
+	float ForwardScale;
+	float RightScale;
 	FVector FirstTargetRelativeLocation;
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
@@ -109,6 +115,7 @@ private:
 	bool bShowHitResult;
 	bool bDrawDebug;
 	bool bOnGround;
+	bool bFirstClimbMove;
 	float WallHeight;
 	float WallDepth;
 	float VaultHeight;
