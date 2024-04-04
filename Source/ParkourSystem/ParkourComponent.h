@@ -62,11 +62,19 @@ private:
 
 	void SetParkourState(const FGameplayTag& NewParkourState);
 
+	void SetClimbStyle (const FGameplayTag& NewClimbStyle);
+
 	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
 
 	bool CheckMantleSurface();
 
 	bool CheckVaultSurface();
+
+	bool CheckClimbSurface();
+
+	void CheckClimbStyle();
+
+	void SecondClimbLedgeResultCalculation();
 
 	void PlayParkourMontage();
 
@@ -93,6 +101,8 @@ private:
 	FVector FirstTargetRelativeLocation;
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
+	FGameplayTag ClimbStyle;
+	FGameplayTag BlendOutState;
 	bool bAutoClimb;
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
@@ -109,6 +119,7 @@ private:
 	FHitResult TopHits;
 	FHitResult WallDepthResult;
 	FHitResult WallVaultResult;
+	FHitResult SecondClimbLedgeResult;
 	FRotator WallRotation;
 	UParkourVariables* ParkourVariables;
 };

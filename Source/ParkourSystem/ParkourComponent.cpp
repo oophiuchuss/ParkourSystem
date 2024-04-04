@@ -14,6 +14,8 @@
 #include "HighVaultDT.h"
 #include "MantleDT.h"
 #include "LowMantleDT.h"
+#include "BracedClimbDT.h"
+#include "FreeHangDT.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -84,10 +86,11 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	Camera = NewCamera;
 	ParkourActionTag = FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction");
 	ParkourStateTag = FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy");
+	ClimbStyle = FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang");
 	bAutoClimb = false;
 	bCanAutoClimb = true;
 	bCanManualClimb = true;
-	bShowHitResult = false;
+	bShowHitResult = true;
 	bDrawDebug = false;
 	bOnGround = true;
 	if (Character)
@@ -235,7 +238,6 @@ void UParkourComponent::ChekcWallShape()
 			HopHitTraces.Add(CloneLineHitResult);
 		}
 
-		//TODO should be in the center, not on the corner
 		for (int32 j = 1; j < HopHitTraces.Num(); ++j)
 		{
 			float Distance1 = HopHitTraces[j].bBlockingHit ? HopHitTraces[j].Distance : FVector::Distance(HopHitTraces[j].TraceStart, HopHitTraces[j].TraceEnd);
@@ -376,6 +378,10 @@ void UParkourComponent::ShowHitResults()
 		if (WallVaultResult.bBlockingHit && !WallVaultResult.bStartPenetrating)
 			DrawDebugSphere(Character->GetWorld(), WallVaultResult.ImpactPoint, 5.0f,
 				12, FColor::Magenta, false, 1.0f);
+
+		if (SecondClimbLedgeResult.bBlockingHit)
+			DrawDebugSphere(Character->GetWorld(), SecondClimbLedgeResult.ImpactPoint, 5.0f,
+				12, FColor::Black, false, 1.0f);
 	}
 }
 
@@ -425,12 +431,6 @@ void UParkourComponent::ParkourType(bool AutoClimb)
 	}
 
 	if (WallHeight > 0 && WallHeight <= 44)
-	{
-		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-		return;
-	}
-
-	if (WallHeight >= 250)
 	{
 		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
 		return;
@@ -490,6 +490,21 @@ void UParkourComponent::ParkourType(bool AutoClimb)
 			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
 		else
 			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+
+	if (WallHeight < 250)
+	{
+		if (CheckClimbSurface())
+		{
+			CheckClimbStyle();
+			SecondClimbLedgeResultCalculation();
+
+			if(ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+			else
+				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+		}
+	}
+
 
 	/*if (WallHeight > 90 && WallHeight <= 120)
 	{
@@ -765,11 +780,21 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	{
 		ParkourVariables = NewObject<ULowMantleDT>();
 	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Climb"))
+	{
+		ParkourVariables = NewObject<UBracedClimbDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangClimb"))
+	{
+		ParkourVariables = NewObject<UFreeHangDT>();
+	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
 	{
 		ResetParkourResults();
 		return;
 	}
+
+	BlendOutState = ParkourVariables->ParkourOutState;
 
 	PlayParkourMontage();
 }
@@ -801,7 +826,7 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 	{
-		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator::ZeroRotator, true, true);
+		SetUpParkourSettings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, FRotator(.0f, 0.0f, .0f), true, true);
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Mantle"))
 	{
@@ -819,6 +844,32 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 	{
 		SetUpParkourSettings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, FRotator(.0f, 500.0f, .0f), true, false);
 	}
+}
+
+void UParkourComponent::SetClimbStyle(const FGameplayTag& NewClimbStyle)
+{
+	if (ClimbStyle == NewClimbStyle)
+		return;
+
+	ClimbStyle = NewClimbStyle;
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetClimbStyle(AnimInstance, ClimbStyle);
+
+	if (!WidgetActor->WidgetComponent->GetWidget()->GetClass()->ImplementsInterface(UParkourStatsInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: Widget does not implement the Stats interface"));
+		return;
+	}
+
+	IParkourStatsInterface* ParkourStatsInterface = Cast<IParkourStatsInterface>(WidgetActor->WidgetComponent->GetWidget());
+	ParkourStatsInterface->Execute_SetClimbStyle(WidgetActor->WidgetComponent->GetWidget(), ClimbStyle.GetTagName().ToString());
 }
 
 void UParkourComponent::SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately)
@@ -875,6 +926,72 @@ bool UParkourComponent::CheckVaultSurface()
 	return !HitResult.bBlockingHit;
 }
 
+bool UParkourComponent::CheckClimbSurface()
+{
+	FQuat QuatRotation = FQuat(WallRotation);
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector StartLocation = WallTopResult.ImpactPoint + FVector(0.0f, 0.0f, -90.0f) + (ForwardVector * -55.0f);
+	float HalfHeight = 82.0f;
+	float Radius = 25.0f;
+
+	FCollisionQueryParams TraceParams(FName(TEXT("CapsuleTrace")));
+
+	FHitResult HitResult;
+	Character->GetWorld()->SweepSingleByChannel(HitResult, StartLocation, StartLocation, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeBox(FVector(20.0f)), TraceParams);
+	if (bDrawDebug)
+	{
+		if (HitResult.bBlockingHit || HitResult.bStartPenetrating)
+			DrawDebugCapsule(Character->GetWorld(), HitResult.ImpactPoint, HalfHeight, Radius, FQuat::Identity, FColor::Red, false, 2.0f);
+		DrawDebugCapsule(Character->GetWorld(), StartLocation, HalfHeight, Radius, FQuat::Identity, FColor::Green, false, 2.0f);
+	}
+
+	return !HitResult.bBlockingHit;
+}
+
+void UParkourComponent::CheckClimbStyle()
+{
+	FQuat QuatRotation = FQuat(WallRotation);
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector StartLocation = WallTopResult.ImpactPoint + FVector(0.0f, 0.0f, -125.0f) + (ForwardVector * -10.0f);
+	FVector EndLocation = StartLocation + (ForwardVector * 40.0f);
+	FHitResult HitResult;
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 10.0f, ECC_Visibility);
+
+	if (HitResult.bBlockingHit)
+		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.Braced"));
+	else
+		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang"));
+}
+
+void UParkourComponent::SecondClimbLedgeResultCalculation()
+{
+	FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(WallHitResult.ImpactNormal));
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector StartLocation = WallHitResult.ImpactPoint + (ForwardVector * 30.0f);
+	FVector EndLocation = WallHitResult.ImpactPoint - (ForwardVector * 30.0f);
+
+	PerformSphereTraceByChannel(Character->GetWorld(), SecondClimbLedgeResult, StartLocation, EndLocation, 5.0f, ECC_Visibility);
+
+	if (!SecondClimbLedgeResult.bBlockingHit)
+		return;
+
+	WallRotation = UParkourFunctionLibrary::NormalReverseRotationZ(SecondClimbLedgeResult.ImpactNormal);
+	QuatRotation = FQuat(WallRotation);
+	ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	StartLocation = SecondClimbLedgeResult.ImpactPoint + (ForwardVector * 2.0f) + FVector(0.0f, 0.0f, 5.0f);
+	EndLocation = StartLocation - FVector(0.0f, 0.0f, 55.0f);
+	
+	FHitResult HitResult;
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility);
+
+	SecondClimbLedgeResult.Location = HitResult.Location;
+	SecondClimbLedgeResult.ImpactPoint.Z = HitResult.ImpactPoint.Z;
+}
+
 void UParkourComponent::PlayParkourMontage()
 {
 	SetParkourState(ParkourVariables->ParkourInState);
@@ -903,18 +1020,15 @@ void UParkourComponent::PlayParkourMontage()
 	AnimInstance->Montage_Play(AnimMontage, 1.0f, EMontagePlayReturnType::MontageLength, StartTimeInSeconds);
 }
 
-
-
 void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (bInterrupted)
 		return;
 
 	//TODO There should be ParkourVariables pointer
-	SetParkourState(FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy"));
+	SetParkourState(BlendOutState);
 	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
 }
-
 
 FVector UParkourComponent::FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const
 {
@@ -941,7 +1055,6 @@ FVector UParkourComponent::FindWarpLocationChecked(const FVector& ImpactPoint, f
 	return AdjustedImpactPoint;
 }
 
-
 void UParkourComponent::ResetParkourResults()
 {
 	HopHitTraces.Empty();
@@ -951,6 +1064,6 @@ void UParkourComponent::ResetParkourResults()
 	WallDepthResult = FHitResult();
 	WallVaultResult = FHitResult();
 	TopHits = FHitResult();
-
+	SecondClimbLedgeResult = FHitResult();
 }
 

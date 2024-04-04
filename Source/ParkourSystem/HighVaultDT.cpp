@@ -7,14 +7,11 @@ UHighVaultDT::UHighVaultDT()
 {
 	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/HighVaultUE5_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
+	
 	if (MontageAsset.Succeeded())
-	{
 		ParkourMontage = MontageAsset.Object;
-	}
 	else
-	{
 		UE_LOG(LogTemp, Warning, TEXT("UThinVaultDT: AnimMontage wasn't found"));
-	}
 
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.Vault");
 	ParkourOutState = FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy");

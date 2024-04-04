@@ -7,14 +7,11 @@ UMantleDT::UMantleDT()
 {
 	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/MantleUE5_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
+	
 	if (MontageAsset.Succeeded())
-	{
 		ParkourMontage = MontageAsset.Object;
-	}
 	else
-	{
 		UE_LOG(LogTemp, Warning, TEXT("UMantleDT: AnimMontage wasn't found"));
-	}
 
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.Mantle");
 	ParkourOutState = FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy");
