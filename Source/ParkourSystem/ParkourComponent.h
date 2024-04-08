@@ -45,14 +45,20 @@ public:
 
 	UFUNCTION()
 	void OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
+	void LeftClimbIK(bool bFirst);
+	
+	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
+	void RightClimbIK(bool bFirst);
 private:
 	void ParkourAction();
 
 	void ChekcWallShape();
 
-	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel) const;
+	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere) const;
 
-	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel) const;
+	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel, bool bDrawDebugLine) const;
 
 	void ShowHitResults();
 
@@ -78,6 +84,8 @@ private:
 
 	void SecondClimbLedgeResultCalculation();
 
+
+
 	void PlayParkourMontage();
 
 	FVector FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
@@ -101,6 +109,8 @@ private:
 	float ArrowLocationX;
 	float ArrowLocationZ;
 	float CharacterHeight;
+	float CharacterHandUp;
+	float CharacterHandFront;
 	float FirstTargetArmLenght;
 	float ForwardScale;
 	float RightScale;
