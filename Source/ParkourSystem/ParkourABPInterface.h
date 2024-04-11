@@ -44,10 +44,10 @@ public:
 	bool SetRightHandLedgeLocation(FVector RightHandLedgeLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "ParkourSystem")
-	bool SetLeftFootLedgeLocation(FVector LeftFootLedgeLocation);
+	bool SetLeftFootLocation(FVector LeftFootLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "ParkourSystem")
-	bool SetRightFootLedgeLocation(FVector RightFootLedgeLocation);
+	bool SetRightFootLocation(FVector RightFootLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "ParkourSystem")
 	bool SetLeftHandLedgeRotation(FRotator LeftHandLedgeRotation);

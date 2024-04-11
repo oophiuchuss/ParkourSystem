@@ -84,7 +84,13 @@ private:
 
 	void SecondClimbLedgeResultCalculation();
 
-
+	void LeftHandLedgeIK(FHitResult& LedgeResult);
+	
+	void LeftFootIK(FHitResult& LedgeResult);
+	
+	void RightHandLedgeIK(FHitResult& LedgeResult);
+	
+	void RightFootIK(FHitResult& LedgeResult);
 
 	void PlayParkourMontage();
 
