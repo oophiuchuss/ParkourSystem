@@ -16,10 +16,10 @@ UFreeHangDT::UFreeHangDT()
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.ReachLedge");
 	ParkourOutState = FGameplayTag::RequestGameplayTag("Parkour.State.Climb");
 
-	Warp1XOffset = 8.0f;
-	Warp1ZOffset = -203.0;
-	Warp2XOffset = 0.0f;
-	Warp2ZOffset = 0.0f;
+	Warp1XOffset = -50.0f;
+	Warp1ZOffset = -203.0f;
+	Warp2XOffset = 7.0f;
+	Warp2ZOffset = -203.0f;
 	Warp3XOffset = 0.0f;
 	Warp3ZOffset = 0.0f;
 	MontageStartPosition = 0.0f;
