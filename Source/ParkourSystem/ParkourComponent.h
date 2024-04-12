@@ -31,6 +31,9 @@ public:
 	class UInputAction* ParkourInputAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* ParkourDropInputAction;	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourMoveInputAction;
 
 protected:
@@ -52,7 +55,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
 	void RightClimbIK(bool bFirst);
 private:
+
 	void ParkourAction();
+
+	void ParkourActionFunction(bool bAutoClimb);
+
+	void AutoClimb();
+
+	void ParkourDrop();
+
+	void SetCanManualClimb();
 
 	void ChekcWallShape();
 
@@ -64,7 +76,7 @@ private:
 
 	void CheckDistance();
 
-	void ParkourType(bool AutoClimb);
+	void ParkourType(bool bAutoClimb);
 
 	void SetParkourAction(const FGameplayTag& NewParkourAction);
 
@@ -125,7 +137,6 @@ private:
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
 	FGameplayTag BlendOutState;
-	bool bAutoClimb;
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
 	bool bShowHitResult;
@@ -145,4 +156,5 @@ private:
 	FHitResult SecondClimbLedgeResult;
 	FRotator WallRotation;
 	UParkourVariables* ParkourVariables;
+	FTimerHandle TimerHandle_DelayedFunction;
 };
