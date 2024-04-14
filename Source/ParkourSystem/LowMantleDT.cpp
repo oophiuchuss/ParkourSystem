@@ -16,8 +16,8 @@ ULowMantleDT::ULowMantleDT()
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.Mantle");
 	ParkourOutState = FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy");
 
-	Warp1XOffset = -40.0f;
-	Warp1ZOffset = -40.0;
+	Warp1XOffset = -20.0f;
+	Warp1ZOffset = -20.0;
 	Warp2XOffset = 15.0f;
 	Warp2ZOffset = 2.0f;
 	Warp3XOffset = 0.0f;
