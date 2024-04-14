@@ -176,10 +176,9 @@ void UParkourComponent::ParkourActionFunction(bool bAutoClimb)
 void UParkourComponent::AutoClimb()
 {
 	FVector Location = CharacterMesh->GetSocketLocation("root");
-	Location.Z = 0;
 
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
-		Location.Z = UParkourFunctionLibrary::SelectClimbStyleFloat(50.0f, 2.0f, ClimbStyle);
+		Location.Z += UParkourFunctionLibrary::SelectClimbStyleFloat(50.0f, 2.0f, ClimbStyle);
 
 	FHitResult HitResult;
 	FCollisionQueryParams TraceParams(FName(TEXT("BoxTrace")));
@@ -188,7 +187,8 @@ void UParkourComponent::AutoClimb()
 	if (bDrawDebug) {
 		if (HitResult.bBlockingHit)
 			DrawDebugBox(Character->GetWorld(), HitResult.Location, FVector(10.0f, 10.0f, 4.0f), FColor::Red, false, 2.0f);
-		DrawDebugBox(Character->GetWorld(), Location, FVector(10.0f, 10.0f, 4.0f), FColor::Red, false, 2.0f);
+		else
+			DrawDebugBox(Character->GetWorld(), Location, FVector(10.0f, 10.0f, 4.0f), FColor::Green, false, 2.0f);
 	}
 
 	if (bOnGround)
