@@ -26,7 +26,13 @@ UParkourComponent::UParkourComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+	FString path = "/ParkourSystem/Curves/FC_ParkourCameraMove";
+	ConstructorHelpers::FObjectFinder<UCurveFloat> MontageAsset(*path);
+
+	if (MontageAsset.Succeeded())
+		CameraCurve = MontageAsset.Object;
+	else
+		UE_LOG(LogTemp, Warning, TEXT("SetInitializeReference: CameraCurve wasn't found"));
 }
 
 // Called when the game starts
@@ -128,8 +134,8 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 
 	if (CameraBoom)
 	{
-		FirstTargetArmLenght = CameraBoom->TargetArmLength;
-		FirstTargetRelativeLocation = CameraBoom->GetComponentLocation();
+		FirstCameraTargetArmLenght = CameraBoom->TargetArmLength;
+		FirstTargetRelativeLocation = CameraBoom->GetRelativeLocation();
 	}
 	else
 		return false;
@@ -875,6 +881,8 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 	if (ParkourStateTag == NewParkourState)
 		return;
 
+	PreviousStateSettings(ParkourStateTag, NewParkourState);
+
 	ParkourStateTag = NewParkourState;
 
 	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
@@ -894,6 +902,8 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 
 	IParkourStatsInterface* ParkourStatsInterface = Cast<IParkourStatsInterface>(WidgetActor->WidgetComponent->GetWidget());
 	ParkourStatsInterface->Execute_SetParkourState(WidgetActor->WidgetComponent->GetWidget(), ParkourStateTag.GetTagName().ToString());
+	
+	FindMontageStartTime();
 
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 	{
@@ -954,6 +964,72 @@ void UParkourComponent::SetUpParkourSettings(ECollisionEnabled::Type CollsionTyp
 		CharacterMovement->StopMovementImmediately();
 }
 
+void UParkourComponent::PreviousStateSettings(const FGameplayTag& PreviousState, const FGameplayTag& NewState)
+{
+	if (PreviousState.GetTagName().IsEqual("Parkour.State.Climb"))
+	{
+		if (NewState.GetTagName().IsEqual("Parkour.State.ReachLedge"))
+		{
+
+		}
+		else if (NewState.GetTagName().IsEqual("Parkour.State.Mantle"))
+		{
+			TargetRelativeCameraLocation = FirstTargetRelativeLocation;
+			TargetArmLenght = FirstCameraTargetArmLenght;
+			AddCameraTimeline(0.4f);
+		}
+		else if (NewState.GetTagName().IsEqual("Parkour.State.NotBusy"))
+		{
+			TargetRelativeCameraLocation = FirstTargetRelativeLocation;
+			TargetArmLenght = FirstCameraTargetArmLenght;
+			AddCameraTimeline(0.4f);
+		}
+	}
+	else if (PreviousState.GetTagName().IsEqual("Parkour.State.NotBusy"))
+	{
+		if (NewState.GetTagName().IsEqual("Parkour.State.ReachLedge"))
+		{
+			TargetRelativeCameraLocation = FVector(-50.0f, 0.0f, 70.0f);
+			TargetArmLenght = 500.0f;
+			AddCameraTimeline(0.4f);
+		}
+
+	}
+}
+
+void UParkourComponent::AddCameraTimeline(float Time)
+{
+	float WorldDeltaSeconds = GetWorld()->GetDeltaSeconds();
+	Time += WorldDeltaSeconds;
+
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+
+	TimerManager.SetTimer(TimerHandle_FinishCameraTimeline, this, &UParkourComponent::FinishTimeline, 0.4, false);
+
+	TimerManager.SetTimer(TimerHandle_TickCameraTimeline, this, &UParkourComponent::CameraTimelineTick, WorldDeltaSeconds, true);
+
+}
+
+void UParkourComponent::CameraTimelineTick()
+{
+	float InTime = GetWorld()->GetTimerManager().GetTimerElapsed(TimerHandle_FinishCameraTimeline);
+	CameraCurveAlpha = CameraCurve->GetFloatValue(InTime);
+
+	FVector LocationDiff = TargetRelativeCameraLocation - CameraBoom->GetRelativeLocation();
+
+	CameraBoom->SetRelativeLocation(CameraBoom->GetRelativeLocation() + (LocationDiff * CameraCurveAlpha));
+
+	float TargetArmLenghtDiff = TargetArmLenght - CameraBoom->TargetArmLength;
+
+	CameraBoom->TargetArmLength += TargetArmLenghtDiff * CameraCurveAlpha;
+
+}
+void UParkourComponent::FinishTimeline()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_FinishCameraTimeline);
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_TickCameraTimeline);
+	CameraCurveAlpha = 0.0f;
+}
 bool UParkourComponent::CheckMantleSurface()
 {
 	FVector StartLocation = WallTopResult.ImpactPoint + FVector(0.0f, 0.0f, CapsuleComponent->GetUnscaledCapsuleHalfHeight() + 8.0f);
@@ -1242,7 +1318,6 @@ void UParkourComponent::LeftFootIK(FHitResult& LedgeResult)
 	}
 }
 
-
 void UParkourComponent::RightClimbIK(bool bFirst)
 {
 	if (!bFirst)
@@ -1422,6 +1497,7 @@ void UParkourComponent::RightFootIK(FHitResult& LedgeResult)
 		}
 	}
 }
+
 void UParkourComponent::PlayParkourMontage()
 {
 	SetParkourState(ParkourVariables->ParkourInState);
@@ -1448,11 +1524,21 @@ void UParkourComponent::PlayParkourMontage()
 		UE_LOG(LogTemp, Warning, TEXT("PlayParkourMontage: AnimMontage wasn't found"));
 		return;
 	}
-	float StartTimeInSeconds = ParkourVariables->MontageStartPosition;
+	float StartTimeInSeconds = MontageStartTime;
 
 	AnimInstance->Montage_Play(AnimMontage, 1.0f, EMontagePlayReturnType::MontageLength, StartTimeInSeconds);
 }
 
+void UParkourComponent::FindMontageStartTime()
+{
+	if ((ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Climb") || ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangClimb")) && !bOnGround)
+	{
+		MontageStartTime = ParkourVariables->FallingMontageStartPosition;
+		return;
+	}
+	
+	MontageStartTime = ParkourVariables->MontageStartPosition;
+}
 
 void UParkourComponent::Move(const FInputActionValue& Value)
 {
@@ -1487,8 +1573,6 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 
 
 }
-
-
 
 void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
 {

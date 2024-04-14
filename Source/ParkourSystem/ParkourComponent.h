@@ -8,6 +8,7 @@
 #include "ArrowActor.h"
 #include "GameplayTagContainer.h"
 #include "ParkourVariables.h"
+#include "Curves/CurveFloat.h"
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -36,6 +37,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourMoveInputAction;
 
+
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -56,6 +59,10 @@ public:
 	void RightClimbIK(bool bFirst);
 private:
 
+	////////////////////////////////////////////////////////////////////
+
+	//PARKOUR ACTION
+
 	void ParkourAction();
 
 	void ParkourActionFunction(bool bAutoClimb);
@@ -66,7 +73,20 @@ private:
 
 	void SetCanManualClimb();
 
+	void Move(const FInputActionValue& Value);
+	////////////////////////////////////////////////////////////////////
+
+	//SURFACE CHECK
+
 	void ChekcWallShape();
+
+	bool CheckMantleSurface();
+
+	bool CheckVaultSurface();
+
+	bool CheckClimbSurface();
+
+	void CheckClimbStyle();
 
 	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere) const;
 
@@ -75,6 +95,12 @@ private:
 	void ShowHitResults();
 
 	void CheckDistance();
+
+	void ResetParkourResults();
+
+	////////////////////////////////////////////////////////////////////
+
+	//SET UP STATES AND ACTIONS
 
 	void ParkourType(bool bAutoClimb);
 
@@ -86,14 +112,22 @@ private:
 
 	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
 
-	bool CheckMantleSurface();
+	
+	////////////////////////////////////////////////////////////////////
 
-	bool CheckVaultSurface();
+	//DYNAMIC CAMERA
+	void PreviousStateSettings(const FGameplayTag& PreviousState, const FGameplayTag& NewState);
 
-	bool CheckClimbSurface();
+	void AddCameraTimeline(float Time);
 
-	void CheckClimbStyle();
+	void CameraTimelineTick();
+	
+	void FinishTimeline();
 
+
+	////////////////////////////////////////////////////////////////////
+
+	//INVERSE KINEMATICS
 	void SecondClimbLedgeResultCalculation();
 
 	void LeftHandLedgeIK(FHitResult& LedgeResult);
@@ -104,16 +138,21 @@ private:
 	
 	void RightFootIK(FHitResult& LedgeResult);
 
+
+	////////////////////////////////////////////////////////////////////
+
+	//MONTAGES
 	void PlayParkourMontage();
 
 	FVector FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
 
 	FVector FindWarpLocationChecked(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
 
-	void ResetParkourResults();
+	void FindMontageStartTime();
 
-	void Move(const FInputActionValue& Value);
+	////////////////////////////////////////////////////////////////////
 
+	//VARIABLES
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
 	USkeletalMeshComponent* CharacterMesh;
@@ -129,10 +168,12 @@ private:
 	float CharacterHeight;
 	float CharacterHandUp;
 	float CharacterHandFront;
-	float FirstTargetArmLenght;
+	float FirstCameraTargetArmLenght;
+	float TargetArmLenght;
 	float ForwardScale;
 	float RightScale;
 	FVector FirstTargetRelativeLocation;
+	FVector TargetRelativeCameraLocation;
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
@@ -146,6 +187,8 @@ private:
 	float WallHeight;
 	float WallDepth;
 	float VaultHeight;
+	float CameraCurveAlpha;
+	float MontageStartTime;
 	TArray<FHitResult> WallHitTraces;
 	TArray<FHitResult> HopHitTraces;
 	FHitResult WallHitResult;
@@ -157,4 +200,7 @@ private:
 	FRotator WallRotation;
 	UParkourVariables* ParkourVariables;
 	FTimerHandle TimerHandle_DelayedFunction;
+	FTimerHandle TimerHandle_FinishCameraTimeline;
+	FTimerHandle TimerHandle_TickCameraTimeline;
+	UCurveFloat* CameraCurve;
 };
