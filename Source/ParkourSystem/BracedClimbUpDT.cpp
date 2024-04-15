@@ -5,7 +5,7 @@
 
 UBracedClimbUpDT::UBracedClimbUpDT()
 {
-	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/BracedClimbUpTheLedgeUE5_Montage";
+	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/BracedClimbUpTheLedge_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
 
 	if (MontageAsset.Succeeded())

@@ -5,7 +5,7 @@
 
 ULowMantleDT::ULowMantleDT()
 {
-	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/LowMantleUE5_Montage";
+	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/LowMantle_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
 	
 	if (MontageAsset.Succeeded())

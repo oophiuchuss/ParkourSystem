@@ -5,7 +5,7 @@
 
 UFreeHangClimbUpDT::UFreeHangClimbUpDT()
 {
-	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/FreeHangClimbUpUE5_Montage";
+	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/FreeHangClimbUp_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
 
 	if (MontageAsset.Succeeded())

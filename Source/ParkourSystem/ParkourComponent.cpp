@@ -21,6 +21,8 @@
 #include "FreeHangDT.h"
 #include "BracedClimbUpDT.h"
 #include "FreeHangClimbUpDT.h"
+#include "FallingBracedClimbDT.h"
+#include "FallingFreeHangClimb.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -502,9 +504,9 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 			if (CheckAirHang())
 			{
 				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingBraced"));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingFreeHang"));
 			}
 			else
 			{
@@ -584,9 +586,9 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 			if (CheckAirHang())
 			{
 				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingBraced"));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingFreeHang"));
 			}
 			else
 			{
@@ -659,6 +661,14 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangClimbUp"))
 	{
 		ParkourVariables = NewObject<UFreeHangClimbUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FallingBraced"))
+	{
+		ParkourVariables = NewObject<UFallingBracedClimbDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FallingFreeHang"))
+	{
+		ParkourVariables = NewObject<UFallingFreeHangClimb>();
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
 	{
@@ -1310,7 +1320,7 @@ void UParkourComponent::PlayParkourMontage()
 		FindWarpLocationChecked(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
 
 	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour5",
-		FindWarpLocationChecked(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
+		FindWarpLocation(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
 
 
 	UAnimMontage* AnimMontage = ParkourVariables->ParkourMontage;
@@ -1393,9 +1403,10 @@ FVector UParkourComponent::FindWarpLocation(const FVector& ImpactPoint, float XO
 FVector UParkourComponent::FindWarpLocationChecked(const FVector& ImpactPoint, float XOffset, float ZOffset) const
 {
 	FVector StartLocation = ImpactPoint + WallRotation.RotateVector(FVector::ForwardVector) * XOffset + FVector(0.0f, 0.0f, 40.0f);
+	FVector EndLocation = StartLocation - FVector(0.0f, 0.0f, 60.0f);
 
 	FHitResult HitResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, StartLocation - FVector(0.0f, 0.0f, 60.0f), 25.0f, ECC_Visibility, bDrawDebug);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 25.0f, ECC_Visibility, bDrawDebug);
 
 	FVector AdjustedImpactPoint = HitResult.bBlockingHit ? HitResult.ImpactPoint : ImpactPoint;
 
@@ -1479,14 +1490,14 @@ void UParkourComponent::CheckClimbOrHop()
 
 bool UParkourComponent::CheckAirHang() const
 {
-	if (SecondClimbLedgeResult.bBlockingHit)
+	if (!SecondClimbLedgeResult.bBlockingHit)
 		return false;
 
 	float HeadLocationZ = CharacterMesh->GetSocketLocation("head").Z;
 
 	float LedgeLocationZ = SecondClimbLedgeResult.ImpactPoint.Z;
 
-	if (HeadLocationZ - LedgeLocationZ <= 30.0f || bOnGround)
+	if (bOnGround || HeadLocationZ - LedgeLocationZ <= 30.0f)
 		return false;
 
 	return true;

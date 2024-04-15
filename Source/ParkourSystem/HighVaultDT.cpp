@@ -5,7 +5,7 @@
 
 UHighVaultDT::UHighVaultDT()
 {
-	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/HighVaultUE5_Montage";
+	FString path = "/ParkourSystem/Animations/ParkourAnimations/Montages/HighVault_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
 	
 	if (MontageAsset.Succeeded())
