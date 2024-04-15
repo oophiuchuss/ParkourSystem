@@ -98,6 +98,12 @@ private:
 
 	void ResetParkourResults();
 
+	float FirstTraceHeight() const;
+
+	void CheckClimbOrHop();
+
+	bool CheckAirHang() const;
+
 	////////////////////////////////////////////////////////////////////
 
 	//SET UP STATES AND ACTIONS

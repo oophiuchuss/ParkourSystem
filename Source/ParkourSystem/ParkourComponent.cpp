@@ -11,6 +11,7 @@
 #include "ParkourFunctionLibrary.h"
 #include "ParkourABPInterface.h"
 #include "ParkourStatsInterface.h"
+
 #include "ThinVaultDT.h"
 #include "VaultDT.h"
 #include "HighVaultDT.h"
@@ -18,6 +19,8 @@
 #include "LowMantleDT.h"
 #include "BracedClimbDT.h"
 #include "FreeHangDT.h"
+#include "BracedClimbUpDT.h"
+#include "FreeHangClimbUpDT.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -165,7 +168,6 @@ void UParkourComponent::ParkourActionFunction(bool bAutoClimb)
 		}
 		else
 		{
-			ParkourDrop();
 
 			if (bCanManualClimb)
 			{
@@ -247,9 +249,9 @@ void UParkourComponent::ChekcWallShape()
 	{
 		for (int32 j = 0; j <= 11; ++j)
 		{
-			StartLocation = Character->GetActorLocation() + FVector(0.0f, 0.0f, (i * 16.0f) - 60.0f) +
+			StartLocation = Character->GetActorLocation() + FVector(0.0f, 0.0f, (i * 16.0f) + FirstTraceHeight()) +
 				(Character->GetActorForwardVector() * (-20.0f));
-			EndLocation = Character->GetActorLocation() + FVector(0.0f, 0.0f, (i * 16.0f) - 60.0f) +
+			EndLocation = Character->GetActorLocation() + FVector(0.0f, 0.0f, (i * 16.0f) + FirstTraceHeight()) +
 				(Character->GetActorForwardVector() * (j * 10.0f + 10.0f));
 
 			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug);
@@ -486,9 +488,8 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
 	{
 		if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
-		{
-			return;
-		}
+			CheckClimbOrHop();
+
 		return;
 	}
 
@@ -498,11 +499,20 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 		{
 			CheckClimbStyle();
 			SecondClimbLedgeResultCalculation();
-
-			if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+			if (CheckAirHang())
+			{
+				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+				else
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+			}
 			else
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+			{
+				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+				else
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+			}
 		}
 		return;
 	}
@@ -516,13 +526,10 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 	if (WallHeight > 44 && WallHeight < 90)
 	{
 		if (CheckMantleSurface())
-		{
 			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.LowMantle"));
-		}
 		else
-		{
 			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-		}
+
 		return;
 	}
 
@@ -574,242 +581,22 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 		{
 			CheckClimbStyle();
 			SecondClimbLedgeResultCalculation();
-
-			if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
-			else
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
-		}
-	}
-
-
-	/*if (WallHeight > 90 && WallHeight <= 120)
-	{
-		if (WallDepth >= 0 && WallDepth <= 120)
-		{
-			if (VaultHeight >= 60 && VaultHeight <= 120)
+			if (CheckAirHang())
 			{
-				if (WallDepth >= 0 && WallDepth <= 30)
-				{
-					if (CheckVaultSurface())
-					{
-						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ThinVault"));
-						return;
-					}
-					else
-					{
-						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-						return;
-					}
-
-				}
+				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
 				else
-					if (CharacterMovement->Velocity.Length() > 20)
-					{
-						if (CheckVaultSurface())
-						{
-							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
-							return;
-						}
-						else
-						{
-							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-							return;
-						}
-					}
-					else
-						if (CheckMantleSurface())
-						{
-							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-							return;
-						}
-						else
-						{
-							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-							return;
-						}
-
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
 			}
 			else
-				if (CheckMantleSurface())
-				{
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-					return;
-				}
+			{
+				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
 				else
-				{
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-					return;
-				}
+					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+			}
 		}
-		else
-			if (CheckMantleSurface())
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-				return;
-			}
-			else
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-				return;
-			}
 	}
-	else
-	{
-		if (WallHeight > 44 && WallHeight <= 90)
-		{
-			if (CheckMantleSurface())
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.LowMantle"));
-			}
-			else
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-			}
-		}
-		else
-		{
-			if (WallHeight > 120 && WallHeight <= 160)
-			{
-				if (WallDepth > 0 && WallDepth <= 120)
-				{
-					if (VaultHeight >= 60 && VaultHeight <= 120)
-					{
-						if (CharacterMovement->Velocity.Length() > 20)
-						{
-							if (CheckVaultSurface())
-							{
-								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
-								return;
-							}
-							else
-							{
-								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-								return;
-							}
-						}
-						else
-						{
-							if (CheckMantleSurface())
-							{
-								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-								return;
-							}
-							else
-							{
-								SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-								return;
-							}
-						}
-					}
-					else
-					{
-						if (CheckMantleSurface())
-						{
-							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-							return;
-						}
-						else
-						{
-							SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-							return;
-						}
-					}
-				}
-				else
-				{
-					if (CheckMantleSurface())
-					{
-						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-						return;
-					}
-					else
-					{
-						SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-						return;
-					}
-
-				}
-			}
-		}
-	}*/
-	/*if (WallHeight > 44 && WallHeight <= 90)
-	{
-		if (CheckMantleSurface())
-		{
-			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.LowMantle"));
-		}
-		else
-		{
-			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-		}
-		return;
-	}
-
-	if (WallHeight > 90 && WallHeight <= 120 && WallDepth >= 0 && WallDepth <= 120)
-	{
-		if (VaultHeight >= 60 && VaultHeight <= 120 && WallDepth <= 30)
-		{
-			if (CheckVaultSurface())
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ThinVault"));
-			}
-			else
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-			}
-		}
-		else if (CharacterMovement->Velocity.Length() > 20)
-		{
-			if (CheckVaultSurface())
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
-			}
-			else
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-			}
-		}
-		else
-		{
-			if (CheckMantleSurface())
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-			}
-			else
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-			}
-		}
-		return;
-	}
-
-	if (WallHeight > 120 && WallHeight <= 160 && WallDepth > 0 && WallDepth <= 120)
-	{
-		if (VaultHeight >= 60 && VaultHeight <= 120 && CharacterMovement->Velocity.Length() > 20)
-		{
-			if (CheckVaultSurface())
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.HighVault"));
-			}
-			else
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-			}
-		}
-		else
-		{
-			if (CheckMantleSurface())
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
-			}
-			else
-			{
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
-			}
-		}
-		return;
-	}*/
 }
 
 void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
@@ -865,6 +652,14 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	{
 		ParkourVariables = NewObject<UFreeHangDT>();
 	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbingUp"))
+	{
+		ParkourVariables = NewObject<UBracedClimbUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangClimbUp"))
+	{
+		ParkourVariables = NewObject<UFreeHangClimbUpDT>();
+	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
 	{
 		ResetParkourResults();
@@ -902,7 +697,7 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 
 	IParkourStatsInterface* ParkourStatsInterface = Cast<IParkourStatsInterface>(WidgetActor->WidgetComponent->GetWidget());
 	ParkourStatsInterface->Execute_SetParkourState(WidgetActor->WidgetComponent->GetWidget(), ParkourStateTag.GetTagName().ToString());
-	
+
 	FindMontageStartTime();
 
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
@@ -1536,7 +1331,7 @@ void UParkourComponent::FindMontageStartTime()
 		MontageStartTime = ParkourVariables->FallingMontageStartPosition;
 		return;
 	}
-	
+
 	MontageStartTime = ParkourVariables->MontageStartPosition;
 }
 
@@ -1619,5 +1414,81 @@ void UParkourComponent::ResetParkourResults()
 	WallVaultResult = FHitResult();
 	TopHits = FHitResult();
 	SecondClimbLedgeResult = FHitResult();
+}
+
+float UParkourComponent::FirstTraceHeight() const
+{
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
+		return -60.0f;
+
+	float ClimbHeight = 0.0f;
+
+	for (int32 i = 0; i < 5; i++)
+	{
+		FVector StartLocation = Character->GetActorLocation();
+		float RightHandZLocation = CharacterMesh->GetSocketLocation("hand_r").Z;
+		float LeftHandZLocation = CharacterMesh->GetSocketLocation("hand_l").Z;
+		StartLocation.Z = RightHandZLocation < LeftHandZLocation ? LeftHandZLocation : RightHandZLocation;
+		StartLocation.Z -= CharacterHeight - CharacterHandUp;
+		StartLocation -= Character->GetActorForwardVector() * 20.0f;
+
+		FVector EndLocation = StartLocation + Character->GetActorForwardVector() * 20.0f * (i + 1);
+
+		FHitResult FirstHitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), FirstHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+		if (!FirstHitResult.bBlockingHit)
+			continue;
+
+		for (int32 j = 0; j < 10; j++)
+		{
+			FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(FirstHitResult.ImpactNormal));
+			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+			StartLocation = FirstHitResult.ImpactPoint + ForwardVector * 2.0f;
+			StartLocation.Z += 5.0f + j * 10.0f;
+
+			EndLocation = StartLocation;
+			EndLocation.Z -= 25.0f + j * -5.0f;
+
+			FHitResult SecondHitResult;
+			PerformSphereTraceByChannel(Character->GetWorld(), SecondHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug);
+
+			if (SecondHitResult.bBlockingHit && !SecondHitResult.bStartPenetrating)
+			{
+				ClimbHeight = SecondHitResult.ImpactPoint.Z;
+				break;
+			}
+		}
+
+		break;
+	}
+
+	return ClimbHeight - Character->GetActorLocation().Z - 4.0f;
+}
+
+void UParkourComponent::CheckClimbOrHop()
+{
+	if (!CheckMantleSurface())
+		return;
+
+	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ClimbingUp"));
+	else
+		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimbUp"));
+}
+
+bool UParkourComponent::CheckAirHang() const
+{
+	if (SecondClimbLedgeResult.bBlockingHit)
+		return false;
+
+	float HeadLocationZ = CharacterMesh->GetSocketLocation("head").Z;
+
+	float LedgeLocationZ = SecondClimbLedgeResult.ImpactPoint.Z;
+
+	if (HeadLocationZ - LedgeLocationZ <= 30.0f || bOnGround)
+		return false;
+
+	return true;
 }
 
