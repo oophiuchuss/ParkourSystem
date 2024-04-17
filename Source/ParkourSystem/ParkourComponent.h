@@ -104,6 +104,11 @@ private:
 
 	bool CheckAirHang() const;
 
+	//TODO maybe in other category
+	FRotator GetDesireRotation() const;
+
+	void FindDropDownHangLocation();
+
 	////////////////////////////////////////////////////////////////////
 
 	//SET UP STATES AND ACTIONS
