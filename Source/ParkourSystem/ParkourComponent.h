@@ -74,6 +74,12 @@ private:
 	void SetCanManualClimb();
 
 	void Move(const FInputActionValue& Value);
+
+	void ClimbMove();
+	
+	void StopClimbMovement();
+
+	void ResetMovement();
 	////////////////////////////////////////////////////////////////////
 
 	//SURFACE CHECK
@@ -109,6 +115,16 @@ private:
 
 	void FindDropDownHangLocation();
 
+	void GetClimbForwardValue(float ScaleValue, float& HorizontalForwardValue, float& VerticalForwardValue) const;
+
+	void GetClimbRightValue(float ScaleValue, float& HorizontalRightValue, float& VerticalRightValue) const;
+
+	float GetVerticalAxis() const;
+
+	float GetHorizontalAxis() const;
+
+	FGameplayTag GetClimbDesireRotation();
+
 	////////////////////////////////////////////////////////////////////
 
 	//SET UP STATES AND ACTIONS
@@ -121,9 +137,10 @@ private:
 
 	void SetClimbStyle (const FGameplayTag& NewClimbStyle);
 
+	void SetClimbDirection (const FGameplayTag& NewClimbDirection);
+	
 	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
 
-	
 	////////////////////////////////////////////////////////////////////
 
 	//DYNAMIC CAMERA
@@ -188,6 +205,7 @@ private:
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
+	FGameplayTag ClimbDirection;
 	FGameplayTag BlendOutState;
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
@@ -200,6 +218,13 @@ private:
 	float VaultHeight;
 	float CameraCurveAlpha;
 	float MontageStartTime;
+	float HorizontalClimbForwardValue;
+	float VerticalClimbForwardValue;
+	float HorizontalClimbRightValue;
+	float VerticalClimbRightValue;
+	float DesireRotationZ;
+	float DesireRotationY;
+	float ClimbMoveCheckDistance;
 	TArray<FHitResult> WallHitTraces;
 	TArray<FHitResult> HopHitTraces;
 	FHitResult WallHitResult;

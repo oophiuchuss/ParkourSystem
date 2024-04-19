@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "TimerManager.h"
+#include "Kismet/KismetMathLibrary.h"
 
 #include "ParkourFunctionLibrary.h"
 #include "ParkourABPInterface.h"
@@ -72,6 +73,8 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	ParkourActionTag = FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction");
 	ParkourStateTag = FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy");
 	ClimbStyle = FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang");
+	ClimbDirection = FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection");
+	ClimbMoveCheckDistance = 10.0f;
 	bCanAutoClimb = true;
 	bCanManualClimb = true;
 	bShowHitResult = true;
@@ -89,7 +92,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 				true
 			);
 			WidgetActor->AttachToComponent(Camera, AttachmentRules);
-			WidgetActor->SetActorRelativeLocation(FVector(100.0, 50.0, -3.0));
+			WidgetActor->SetActorRelativeLocation(FVector(100.0f, 50.0f, -3.0f));
 		}
 		else
 			return false;
@@ -105,9 +108,9 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 			);
 			ArrowActor->AttachToComponent(CharacterMesh, AttachmentRules);
 
-			ArrowLocationX = 0;
-			ArrowLocationZ = 100;
-			CharacterHeight = 0;
+			ArrowLocationX = 0.0f;
+			ArrowLocationZ = 195.0f;
+			CharacterHeight = 0.0f;
 			ArrowActor->SetActorRelativeLocation(FVector(ArrowLocationX, 0.0f, ArrowLocationZ - CharacterHeight));
 		}
 		else
@@ -126,6 +129,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 					EnhancedInputComponent->BindAction(ParkourInputAction, ETriggerEvent::Started, this, &UParkourComponent::ParkourAction);
 					EnhancedInputComponent->BindAction(ParkourDropInputAction, ETriggerEvent::Started, this, &UParkourComponent::ParkourDrop);
 					EnhancedInputComponent->BindAction(ParkourMoveInputAction, ETriggerEvent::Triggered, this, &UParkourComponent::Move);
+					EnhancedInputComponent->BindAction(ParkourMoveInputAction, ETriggerEvent::Completed, this, &UParkourComponent::ResetMovement);
 				}
 			}
 		}
@@ -1366,6 +1370,9 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 	ForwardScale = MovementVector.Y;
 	RightScale = MovementVector.X;
 
+	GetClimbForwardValue(ForwardScale, HorizontalClimbForwardValue, VerticalClimbForwardValue);
+	GetClimbRightValue(RightScale, HorizontalClimbRightValue, VerticalClimbRightValue);
+
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
 	{
 		const FRotator Rotation = Character->GetController()->GetControlRotation();
@@ -1380,11 +1387,11 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 	{
-
+		if (AnimInstance->IsAnyMontagePlaying())
+			StopClimbMovement();
+		else
+			ClimbMove();
 	}
-
-
-
 }
 
 void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
@@ -1646,3 +1653,128 @@ void UParkourComponent::FindDropDownHangLocation()
 	}
 }
 
+void UParkourComponent::GetClimbForwardValue(float ScaleValue, float& HorizontalForwardValue, float& VerticalForwardValue) const
+{
+	FRotator DeltaRotation = Character->GetControlRotation() - Character->GetActorRotation();
+	DeltaRotation.Normalize();
+	HorizontalForwardValue = ScaleValue * UKismetMathLibrary::DegSin(DeltaRotation.Yaw);
+	VerticalForwardValue = ScaleValue * UKismetMathLibrary::DegCos(DeltaRotation.Yaw);
+}
+
+void UParkourComponent::GetClimbRightValue(float ScaleValue, float& HorizontalRightValue, float& VerticalRightValue) const
+{
+	FRotator DeltaRotation = Character->GetControlRotation() - Character->GetActorRotation();
+	DeltaRotation.Normalize();
+	HorizontalRightValue = ScaleValue * UKismetMathLibrary::DegCos(0.0f - DeltaRotation.Yaw);
+	VerticalRightValue = ScaleValue * UKismetMathLibrary::DegSin(0.0f - DeltaRotation.Yaw);
+}
+
+float UParkourComponent::GetVerticalAxis() const
+{
+	if (ForwardScale == 0 && RightScale == 0)
+		return 0.0f;
+
+	return FMath::Clamp(VerticalClimbForwardValue + VerticalClimbRightValue, -1.0f, 1.0f);
+}
+
+float UParkourComponent::GetHorizontalAxis() const
+{
+	if (ForwardScale == 0 && RightScale == 0)
+		return 0.0f;
+
+	return FMath::Clamp(HorizontalClimbForwardValue + HorizontalClimbRightValue, -1.0f, 1.0f);
+}
+
+FGameplayTag UParkourComponent::GetClimbDesireRotation()
+{
+	DesireRotationZ = GetVerticalAxis();
+	DesireRotationY = GetHorizontalAxis();
+
+	if (DesireRotationZ >= 0.5f && DesireRotationZ <= 1.0f) {
+		if (DesireRotationY >= -0.5f && DesireRotationY <= 0.0f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Forward");
+		if (DesireRotationY >= 0.5f && DesireRotationY <= 1.0f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.ForwardRight");
+		if (DesireRotationY >= -1.0f && DesireRotationY <= -0.5f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.ForwardLeft");
+	}
+
+	if (DesireRotationZ >= -0.5f && DesireRotationZ <= 0.5f) {
+		if (DesireRotationY >= 0.5f && DesireRotationY <= 1.0f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Right");
+		if (DesireRotationY >= -1.0f && DesireRotationY <= -0.5f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Left");
+	}
+
+	if (DesireRotationZ >= -1.0f && DesireRotationZ <= -0.5f) {
+		if (DesireRotationY >= -0.5f && DesireRotationY <= 0.5f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Backward");
+		if (DesireRotationY >= 0.5f && DesireRotationY <= 1.0f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.BackwardRight");
+		if (DesireRotationY >= -1.0f && DesireRotationY <= -0.5f)
+			return FGameplayTag::RequestGameplayTag("Parkour.Direction.BackwardLeft");
+	}
+
+	return FGameplayTag::RequestGameplayTag("Parkour.Direction.Forward");
+}
+
+
+void UParkourComponent::SetClimbDirection(const FGameplayTag& NewClimbDirection)
+{
+	if (ClimbDirection == NewClimbDirection)
+		return;
+
+	ClimbDirection = NewClimbDirection;
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetClimbMovement(AnimInstance, ClimbDirection);
+}
+
+void UParkourComponent::StopClimbMovement()
+{
+	CharacterMovement->StopMovementImmediately();
+	SetClimbDirection(FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection"));
+}
+
+void UParkourComponent::ResetMovement()
+{
+	ForwardScale = 0.0f;
+	RightScale = 0.0f;
+	SetClimbDirection(FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection"));
+}
+
+void UParkourComponent::ClimbMove()
+{
+	if (!ParkourActionTag.GetTagName().IsEqual("Parkour.Action.CornerMove"))
+	{
+		if (FMath::Abs(GetHorizontalAxis()) <= 0.7f)
+		{
+			StopClimbMovement();
+			return;
+		}
+
+		FName NewDirectionString = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
+
+		SetClimbDirection(FGameplayTag::RequestGameplayTag(NewDirectionString));
+
+		for (int32 i = 0; i < 3; i++)
+		{
+			FQuat QuatRotation = FQuat(ArrowActor->GetArrowComponent()->GetComponentRotation());
+			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+			FVector StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation() + (ClimbMoveCheckDistance * GetHorizontalAxis() * RightVector);
+			StartLocation.Z -= i * 10.0f;
+			FVector EndLocation = StartLocation + ForwardVector * 60.0f;
+
+			FHitResult HitResult;
+			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, true /*bDrawDebug*/);
+		}
+	}
+}
