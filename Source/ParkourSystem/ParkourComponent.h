@@ -94,9 +94,17 @@ private:
 
 	void CheckClimbStyle();
 
-	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere) const;
+	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere) const;
 
-	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation, ECollisionChannel CollisionChannel, bool bDrawDebugLine) const;
+	void PerformBoxTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox) const;
+
+	void PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule) const;
+	
+	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		ECollisionChannel CollisionChannel, bool bDrawDebugLine) const;
 
 	void ShowHitResults();
 
@@ -109,6 +117,8 @@ private:
 	void CheckClimbOrHop();
 
 	bool CheckAirHang() const;
+
+	bool CheckClimbMoveSurface(const FHitResult& MovementHitResult) const;
 
 	//TODO maybe in other category
 	FRotator GetDesireRotation() const;
@@ -124,6 +134,8 @@ private:
 	float GetHorizontalAxis() const;
 
 	FGameplayTag GetClimbDesireRotation();
+
+	float GetClimbMoveSpeed() const;
 
 	////////////////////////////////////////////////////////////////////
 
