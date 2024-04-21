@@ -13,7 +13,6 @@ AArrowActor::AArrowActor()
 	RootComponent = SceneComponent;
 
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
-	ArrowComponent->SetRelativeRotation(FRotator(.0f, 90.0f, 0.0f));
 	ArrowComponent->SetupAttachment(RootComponent);
 	ArrowComponent->SetHiddenInGame(false);
 }

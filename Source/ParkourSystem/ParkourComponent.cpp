@@ -112,6 +112,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 			ArrowLocationZ = 195.0f;
 			CharacterHeight = 0.0f;
 			ArrowActor->SetActorRelativeLocation(FVector(ArrowLocationX, 0.0f, ArrowLocationZ - CharacterHeight));
+			ArrowActor->SetActorRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
 		}
 		else
 			return false;
@@ -1806,7 +1807,11 @@ void UParkourComponent::ClimbMove()
 			PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
 
 			if (OuterLoopHitResult.bStartPenetrating || !OuterLoopHitResult.bBlockingHit)
+			{
+				//TODO should bStartPenetrating also stop movement?
+				StopClimbMovement();
 				continue;
+			}
 
 			for (int32 j = 0; j < 7; j++)
 			{
@@ -1822,7 +1827,15 @@ void UParkourComponent::ClimbMove()
 				PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug);
 
 				if (InnerLoopHitResult.bStartPenetrating)
+				{
+					if (i == 2 && j == 6)
+					{
+						StopClimbMovement();
+						return;
+					}
+
 					continue;
+				}
 
 				if (InnerLoopHitResult.bBlockingHit)
 					bShouldBreak = true;
@@ -1868,6 +1881,11 @@ void UParkourComponent::ClimbMove()
 
 				break;
 			}
+			else if (i == 5)
+			{
+				StopClimbMovement();
+				return;
+			}
 		}
 
 		QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
@@ -1883,12 +1901,15 @@ void UParkourComponent::ClimbMove()
 
 		float DeltaSeconds = Character->GetWorld()->GetDeltaSeconds();
 		float StyleInterpSpeed = UParkourFunctionLibrary::SelectClimbStyleFloat(2.7f, 1.8f, ClimbStyle);
-		NewCharacterLocation.X = FMath::FInterpTo(Character->GetActorLocation().X, OuterLoopVector.X, DeltaSeconds, StyleInterpSpeed);
+		NewCharacterLocation.X = FMath::FInterpTo(Character->GetActorLocation().X, OuterLoopVector.X, DeltaSeconds, GetClimbMoveSpeed());
 		NewCharacterLocation.Y = FMath::FInterpTo(Character->GetActorLocation().Y, OuterLoopVector.Y, DeltaSeconds, GetClimbMoveSpeed());
 		NewCharacterLocation.Z = FMath::FInterpTo(Character->GetActorLocation().Z, TargetInterpZ, DeltaSeconds, StyleInterpSpeed);
 
 		NewCharacterRotation = FMath::RInterpTo(Character->GetActorRotation(), WallRotation, DeltaSeconds, 4.0f);
 		Character->SetActorLocationAndRotation(NewCharacterLocation, NewCharacterRotation);
+
+		SetClimbStyleOnMove(InnerLoopHitResult, WallRotation);
+
 		bFirstClimbMove = true;
 	}
 }
@@ -1915,5 +1936,23 @@ float UParkourComponent::GetClimbMoveSpeed() const
 	float BracedClampedSpeed = FMath::Clamp(AnimInstance->GetCurveValue("Climb Move Speed"), 1.0f, 98.0f);
 	float FreeHangClampedSpeed = FMath::Clamp(AnimInstance->GetCurveValue("Climb Move Speed"), 1.0f, 55.0f);
 
-	return UParkourFunctionLibrary::SelectClimbStyleFloat(BracedClampedSpeed * 0.05f, FreeHangClampedSpeed * 0.045f, ClimbStyle);
+	return UParkourFunctionLibrary::SelectClimbStyleFloat(BracedClampedSpeed * 0.1f, FreeHangClampedSpeed * 0.08f, ClimbStyle);
+}
+
+void UParkourComponent::SetClimbStyleOnMove(const FHitResult& HitResult, const FRotator& Rotation)
+{
+	FQuat QuatRotation = FQuat(Rotation);
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector StartLocation = HitResult.ImpactPoint - ForwardVector * 10.0f;
+	StartLocation.Z -= 125.0f;
+	FVector EndLocation = StartLocation + ForwardVector * 35.0f;
+
+	FHitResult TraceResult;
+	PerformSphereTraceByChannel(Character->GetWorld(), TraceResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug);
+
+	if (TraceResult.bBlockingHit)
+		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.Braced"));
+	else
+		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang"));
 }

@@ -153,6 +153,8 @@ private:
 	
 	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
 
+	void SetClimbStyleOnMove(const FHitResult& HitResult, const FRotator& Rotation);
+
 	////////////////////////////////////////////////////////////////////
 
 	//DYNAMIC CAMERA
