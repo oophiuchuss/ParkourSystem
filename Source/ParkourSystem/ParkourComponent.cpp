@@ -58,6 +58,8 @@ void UParkourComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	AutoClimb();
+
+	ClimbMoveIK();
 }
 
 bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera)
@@ -75,6 +77,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	ClimbStyle = FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang");
 	ClimbDirection = FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection");
 	ClimbMoveCheckDistance = 10.0f;
+	ClimbHandSpace = 20.0f;
 	bCanAutoClimb = true;
 	bCanManualClimb = true;
 	bShowHitResult = true;
@@ -110,8 +113,8 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 
 			ArrowLocationX = 0.0f;
 			ArrowLocationZ = 195.0f;
-			CharacterHeight = 0.0f;
-			ArrowActor->SetActorRelativeLocation(FVector(ArrowLocationX, 0.0f, ArrowLocationZ - CharacterHeight));
+			CharacterHeightDiff = 0.0f;
+			ArrowActor->SetActorRelativeLocation(FVector(ArrowLocationX, 0.0f, ArrowLocationZ - CharacterHeightDiff));
 			ArrowActor->SetActorRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
 		}
 		else
@@ -184,7 +187,7 @@ void UParkourComponent::AutoClimb()
 		Location.Z += UParkourFunctionLibrary::SelectClimbStyleFloat(50.0f, 2.0f, ClimbStyle);
 
 	FHitResult HitResult;
-	PerformBoxTraceByChannel(Character->GetWorld(), HitResult, Location, Location, FVector(10.0f, 10.0f, 4.0f), ECC_Visibility, bDrawDebug);
+	PerformBoxTraceByChannel(Character->GetWorld(), HitResult, Location, Location, FVector(10.0f, 10.0f, 4.0f), ECC_Visibility, bDrawDebug, 0.0f);
 	bOnGround = (HitResult.bBlockingHit || HitResult.bStartPenetrating);
 
 	if (bOnGround)
@@ -401,7 +404,7 @@ void UParkourComponent::ChekcWallShape()
 }
 
 void UParkourComponent::PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-	float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere) const
+	float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime /*= 2.0f*/) const
 {
 	if (!World)
 	{
@@ -415,16 +418,16 @@ void UParkourComponent::PerformSphereTraceByChannel(UWorld* World, FHitResult& H
 	if (bDrawDebugSphere)
 	{
 		if (HitResult.bBlockingHit)
-			DrawDebugSphere(World, HitResult.Location, Radius, 32, FColor::Red, false, 2.0f);
+			DrawDebugSphere(World, HitResult.Location, Radius, 32, FColor::Red, false, DrawTime);
 		if (HitResult.bStartPenetrating)
-			DrawDebugSphere(World, StartLocation, Radius, 8, FColor::Red, false, 2.0f);
+			DrawDebugSphere(World, StartLocation, Radius, 8, FColor::Red, false, DrawTime);
 		else
-			DrawDebugSphere(World, StartLocation, Radius, 8, FColor::Green, false, 2.0f);
+			DrawDebugSphere(World, StartLocation, Radius, 8, FColor::Green, false, DrawTime);
 	}
 }
 
 void UParkourComponent::PerformBoxTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-	const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox) const
+	const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime /*= 2.0f*/) const
 {
 	if (!World)
 	{
@@ -437,14 +440,14 @@ void UParkourComponent::PerformBoxTraceByChannel(UWorld* World, FHitResult& HitR
 
 	if (bDrawDebugBox) {
 		if (HitResult.bBlockingHit)
-			DrawDebugBox(World, HitResult.Location, BoxHalfExtend, FColor::Red, false, 2.0f);
+			DrawDebugBox(World, HitResult.Location, BoxHalfExtend, FColor::Red, false, DrawTime);
 		else
-			DrawDebugBox(World, StartLocation, BoxHalfExtend, FColor::Green, false, 2.0f);
+			DrawDebugBox(World, StartLocation, BoxHalfExtend, FColor::Green, false, DrawTime);
 	}
 }
 
 void UParkourComponent::PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-	float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule) const
+	float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime /*= 2.0f*/) const
 {
 	if (!true)
 	{
@@ -458,16 +461,16 @@ void UParkourComponent::PerformCapsuleTraceByChannel(UWorld* World, FHitResult& 
 	if (bDrawDebugCapsule)
 	{
 		if (HitResult.bBlockingHit)
-			DrawDebugCapsule(Character->GetWorld(), HitResult.Location, HalfHeight, Radius, FQuat::Identity, FColor::Red, false, 2.0f);
+			DrawDebugCapsule(Character->GetWorld(), HitResult.Location, HalfHeight, Radius, FQuat::Identity, FColor::Red, false, DrawTime);
 		if (HitResult.bStartPenetrating)
-			DrawDebugCapsule(Character->GetWorld(), StartLocation, HalfHeight, Radius, FQuat::Identity, FColor::Red, false, 2.0f);
+			DrawDebugCapsule(Character->GetWorld(), StartLocation, HalfHeight, Radius, FQuat::Identity, FColor::Red, false, DrawTime);
 		else
-			DrawDebugCapsule(Character->GetWorld(), StartLocation, HalfHeight, Radius, FQuat::Identity, FColor::Green, false, 2.0f);
+			DrawDebugCapsule(Character->GetWorld(), StartLocation, HalfHeight, Radius, FQuat::Identity, FColor::Green, false, DrawTime);
 	}
 }
 
 void UParkourComponent::PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-	ECollisionChannel CollisionChannel, bool bDrawDebugLine) const
+	ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime /*= 1.0f*/) const
 {
 	if (!World)
 	{
@@ -481,11 +484,11 @@ void UParkourComponent::PerformLineTraceByChannel(UWorld* World, FHitResult& Hit
 	{
 		if (HitResult.bBlockingHit)
 		{
-			DrawDebugLine(World, StartLocation, EndLocation, FColor::Red, false, 1.0f);
-			DrawDebugPoint(World, HitResult.ImpactPoint, 10.0f, FColor::Red, false, 1.0f);
+			DrawDebugLine(World, StartLocation, EndLocation, FColor::Red, false, DrawTime);
+			DrawDebugPoint(World, HitResult.ImpactPoint, 10.0f, FColor::Red, false, DrawTime);
 		}
 		else
-			DrawDebugLine(World, StartLocation, EndLocation, FColor::Green, false, 1.0f);
+			DrawDebugLine(World, StartLocation, EndLocation, FColor::Green, false, DrawTime);
 	}
 }
 
@@ -1040,7 +1043,7 @@ void UParkourComponent::LeftHandLedgeIK(FHitResult& LedgeResult)
 						float StyleMultiplier = ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced") ? CharacterHandFront : 0.0f;
 
 						FVector LeftHandLedgeLocation = FirstHitResult.ImpactPoint + ForwardVector * (-3.0f + StyleMultiplier);;
-						LeftHandLedgeLocation.Z = SecondHitResult.ImpactPoint.Z + CharacterHeight + CharacterHandUp - 9.0f;
+						LeftHandLedgeLocation.Z = SecondHitResult.ImpactPoint.Z + CharacterHeightDiff + CharacterHandUp - 9.0f;
 
 						FRotator LeftHandLedgeRotation = HitResultReverseRotator;
 						LeftHandLedgeRotation.Roll -= 80.0f;
@@ -1100,7 +1103,7 @@ void UParkourComponent::LeftFootIK(FHitResult& LedgeResult)
 			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
 
 			FVector StartLocation = LedgeResult.ImpactPoint - (RightVector * 7.0f) + (ForwardVector * -30.0f);
-			StartLocation.Z += i * 5.0f + (CharacterHeight - 150.0f);
+			StartLocation.Z += i * 5.0f + (CharacterHeightDiff - 150.0f);
 			FVector EndLocation = StartLocation + (ForwardVector * 60.0f);
 
 
@@ -1130,7 +1133,7 @@ void UParkourComponent::LeftFootIK(FHitResult& LedgeResult)
 					for (int32 j = 0; j < 5; j++)
 					{
 						StartLocation = LedgeResult.ImpactPoint + (ForwardVector * -30.0f);
-						StartLocation.Z += j * 5.0f + (CharacterHeight - 150.0f);
+						StartLocation.Z += j * 5.0f + (CharacterHeightDiff - 150.0f);
 						EndLocation = StartLocation + (ForwardVector * 60.0f);
 
 
@@ -1220,7 +1223,7 @@ void UParkourComponent::RightHandLedgeIK(FHitResult& LedgeResult)
 						float StyleMultiplier = ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced") ? CharacterHandFront : 0.0f;
 
 						FVector RightHandLedgeLocation = FirstHitResult.ImpactPoint + ForwardVector * (-3.0f + StyleMultiplier);;
-						RightHandLedgeLocation.Z = SecondHitResult.ImpactPoint.Z + CharacterHeight + CharacterHandUp - 9.0f;
+						RightHandLedgeLocation.Z = SecondHitResult.ImpactPoint.Z + CharacterHeightDiff + CharacterHandUp - 9.0f;
 
 						FRotator RightHandLedgeRotation = FRotator(HitResultReverseRotator);
 						RightHandLedgeRotation.Roll -= 90.0f;
@@ -1280,7 +1283,7 @@ void UParkourComponent::RightFootIK(FHitResult& LedgeResult)
 			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
 
 			FVector StartLocation = LedgeResult.ImpactPoint + (RightVector * 9.0f) + (ForwardVector * -30.0f);
-			StartLocation.Z += i * 5.0f + (CharacterHeight - 140.0f);
+			StartLocation.Z += i * 5.0f + (CharacterHeightDiff - 140.0f);
 			FVector EndLocation = StartLocation + (ForwardVector * 60.0f);
 
 
@@ -1310,7 +1313,7 @@ void UParkourComponent::RightFootIK(FHitResult& LedgeResult)
 					for (int32 j = 0; j < 5; j++)
 					{
 						StartLocation = LedgeResult.ImpactPoint + (ForwardVector * -30.0f);
-						StartLocation.Z += j * 5.0f + (CharacterHeight - 140.0f);
+						StartLocation.Z += j * 5.0f + (CharacterHeightDiff - 140.0f);
 						EndLocation = StartLocation + (ForwardVector * 60.0f);
 
 
@@ -1479,7 +1482,7 @@ float UParkourComponent::FirstTraceHeight() const
 		float RightHandZLocation = CharacterMesh->GetSocketLocation("hand_r").Z;
 		float LeftHandZLocation = CharacterMesh->GetSocketLocation("hand_l").Z;
 		StartLocation.Z = RightHandZLocation < LeftHandZLocation ? LeftHandZLocation : RightHandZLocation;
-		StartLocation.Z -= CharacterHeight - CharacterHandUp;
+		StartLocation.Z -= CharacterHeightDiff - CharacterHandUp;
 		StartLocation -= Character->GetActorForwardVector() * 20.0f;
 
 		FVector EndLocation = StartLocation + Character->GetActorForwardVector() * 20.0f * (i + 1);
@@ -1897,7 +1900,7 @@ void UParkourComponent::ClimbMove()
 		FVector OuterLoopVector = OuterLoopHitResult.ImpactPoint + ForwardVector * StyleMultiplier;
 
 		float StyleSub = UParkourFunctionLibrary::SelectClimbStyleFloat(107.0f, 115.0f, ClimbStyle);
-		float TargetInterpZ = InnerLoopHitResult.ImpactPoint.Z + CharacterHeight - StyleSub;
+		float TargetInterpZ = InnerLoopHitResult.ImpactPoint.Z + CharacterHeightDiff - StyleSub;
 
 		float DeltaSeconds = Character->GetWorld()->GetDeltaSeconds();
 		float StyleInterpSpeed = UParkourFunctionLibrary::SelectClimbStyleFloat(2.7f, 1.8f, ClimbStyle);
@@ -1955,4 +1958,187 @@ void UParkourComponent::SetClimbStyleOnMove(const FHitResult& HitResult, const F
 		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.Braced"));
 	else
 		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang"));
+}
+
+
+void UParkourComponent::ClimbMoveIK()
+{
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
+		return;
+
+	ClimbMoveHandIK();
+}
+
+void UParkourComponent::ClimbMoveHandIK()
+{
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb") || !bFirstClimbMove)
+		return;
+
+	ClimbMoveLeftHandIK();
+	ClimbMoveRightHandIK();
+	
+}
+
+void UParkourComponent::ClimbMoveLeftHandIK()
+{
+	FHitResult HitResult;
+
+	for (int32 i = 0; i < 5; i++)
+	{
+		FVector InitialVector = CharacterMesh->GetSocketLocation("ik_hand_l") + Character->GetActorRightVector() * (i * 2.0f + ClimbHandSpace);
+		InitialVector.Z -= CharacterHeightDiff;
+
+		FVector StartLocation = InitialVector - Character->GetActorForwardVector() * 50.0f;
+		FVector EndLocation = StartLocation + Character->GetActorForwardVector() * 120.0f;
+
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 15.0f, ECC_Visibility, bDrawDebug, 0.0f);
+
+		if (HitResult.bStartPenetrating || !HitResult.bBlockingHit)
+			continue;
+
+		LeftHandClimbResult = HitResult;
+		break;
+	}
+
+	for (int32 i = 0; i < 6; i++)
+	{
+		FVector StartLocation = LeftHandClimbResult.ImpactPoint;
+		StartLocation.Z = ArrowActor->GetArrowComponent()->GetComponentLocation().Z + 10.0f + i * 5.0f;
+
+		FVector EndLocation = StartLocation;
+		EndLocation.Z -= 5 * (i + 10);
+
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.0f);
+
+		if (!HitResult.bStartPenetrating)
+		{
+			if (!HitResult.bBlockingHit)
+				return;
+
+			break;
+		}
+	}
+
+	FQuat QuatRotation = FRotationMatrix::MakeFromX(LeftHandClimbResult.ImpactNormal).ToQuat();
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector LeftHandLcoation = LeftHandClimbResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(CharacterHandFront, 0.0f, ClimbStyle) - 3.0f);
+	LeftHandLcoation.Z = HitResult.ImpactPoint.Z - 9.0f + CharacterHeightDiff + CharacterHandUp + GetClimbLeftHandZOffset();
+
+	FRotator LeftHandRotation = FRotationMatrix::MakeFromX(LeftHandClimbResult.ImpactNormal).Rotator();
+	UParkourFunctionLibrary::ReverseRotation(LeftHandRotation);
+	LeftHandRotation.Roll += 280.0f;
+	LeftHandRotation.Pitch += 90.0f;
+
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ParkourHandIK: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetLeftHandLedgeLocation(AnimInstance, LeftHandLcoation);
+	ParkourABPInterface->Execute_SetLeftHandLedgeRotation(AnimInstance, LeftHandRotation);
+}
+
+void UParkourComponent::ClimbMoveRightHandIK()
+{
+	FHitResult HitResult;
+
+	for (int32 i = 0; i < 5; i++)
+	{
+		FVector InitialVector = CharacterMesh->GetSocketLocation("ik_hand_r") - Character->GetActorRightVector() * (i * 2.0f + ClimbHandSpace);
+		InitialVector.Z -= CharacterHeightDiff;
+
+		FVector StartLocation = InitialVector - Character->GetActorForwardVector() * 50.0f;
+		FVector EndLocation = StartLocation + Character->GetActorForwardVector() * 120.0f;
+
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 15.0f, ECC_Visibility, bDrawDebug, 0.0f);
+
+		if (HitResult.bStartPenetrating || !HitResult.bBlockingHit)
+			continue;
+
+		RightHandClimbResult = HitResult;
+		break;
+	}
+
+	for (int32 i = 0; i < 6; i++)
+	{
+		FVector StartLocation = RightHandClimbResult.ImpactPoint;
+		StartLocation.Z = ArrowActor->GetArrowComponent()->GetComponentLocation().Z + 10.0f + i * 5.0f;
+
+		FVector EndLocation = StartLocation;
+		EndLocation.Z -= 5 * (i + 10);
+
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.0f);
+
+		if (!HitResult.bStartPenetrating)
+		{
+			if (!HitResult.bBlockingHit)
+				return;
+
+			break;
+		}
+	}
+
+	FQuat QuatRotation = FRotationMatrix::MakeFromX(RightHandClimbResult.ImpactNormal).ToQuat();
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector RightHandLcoation = RightHandClimbResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(CharacterHandFront, 0.0f, ClimbStyle) - 3.0f);
+	RightHandLcoation.Z = HitResult.ImpactPoint.Z - 9.0f + CharacterHeightDiff + CharacterHandUp + GetClimbRightHandZOffset();
+
+	FRotator RightHandRotation = FRotationMatrix::MakeFromX(RightHandClimbResult.ImpactNormal).Rotator();
+	UParkourFunctionLibrary::ReverseRotation(RightHandRotation);
+	RightHandRotation.Roll += 270.0f;
+	RightHandRotation.Pitch += 270.0f;
+
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ParkourHandIK: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetRightHandLedgeLocation(AnimInstance, RightHandLcoation);
+	ParkourABPInterface->Execute_SetRightHandLedgeRotation(AnimInstance, RightHandRotation);
+}
+
+float UParkourComponent::GetClimbLeftHandZOffset() const
+{
+	if (ClimbDirection.GetTagName().IsEqual("Parkour.Direction.NoDirection"))
+		return 0.0f;
+
+	float BracedDirectionSubtract = ClimbDirection.GetTagName().IsEqual("Parkour.Direction.Right") ? 255.72f : 195.72f;
+	float FreeHangDirectionSubtract = ClimbDirection.GetTagName().IsEqual("Parkour.Direction.Right") ? 229.09f : 227.6f;
+
+	float OriginalOffset = AnimInstance->GetCurveValue("Hand_L Z") - UParkourFunctionLibrary::SelectClimbStyleFloat(BracedDirectionSubtract, FreeHangDirectionSubtract, ClimbStyle);
+
+	float Result = FMath::Clamp(OriginalOffset, 0.0f, 5.0f);
+
+	FString tmp = ClimbDirection.GetTagName().ToString();
+
+	UE_LOG(LogTemp, Warning, TEXT("%d %s"), Result, *tmp);
+
+	return Result;
+}
+
+float UParkourComponent::GetClimbRightHandZOffset() const
+{
+	if (ClimbDirection.GetTagName().IsEqual("Parkour.Direction.NoDirection"))
+		return 0.0f;
+
+	float BracedDirectionSubtract = ClimbDirection.GetTagName().IsEqual("Parkour.Direction.Right") ? 254.37f : 194.36f;
+	float FreeHangDirectionSubtract = ClimbDirection.GetTagName().IsEqual("Parkour.Direction.Right") ? 227.6f : 229.09f;
+
+	float OriginalOffset = AnimInstance->GetCurveValue("Hand_R Z") - UParkourFunctionLibrary::SelectClimbStyleFloat(BracedDirectionSubtract, FreeHangDirectionSubtract, ClimbStyle);
+
+	float Result = FMath::Clamp(OriginalOffset, 0.0f, 5.0f);
+
+	FString tmp = ClimbDirection.GetTagName().ToString();
+
+	UE_LOG(LogTemp, Warning, TEXT("%d %s"), Result, *tmp);
+
+	return Result;
 }

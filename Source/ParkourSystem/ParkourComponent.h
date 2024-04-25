@@ -95,16 +95,16 @@ private:
 	void CheckClimbStyle();
 
 	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere) const;
+		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime = 2.0f) const;
 
 	void PerformBoxTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox) const;
+		const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime = 2.0f) const;
 
 	void PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule) const;
+		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime = 2.0f) const;
 	
 	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		ECollisionChannel CollisionChannel, bool bDrawDebugLine) const;
+		ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime = 1.0f) const;
 
 	void ShowHitResults();
 
@@ -136,6 +136,10 @@ private:
 	FGameplayTag GetClimbDesireRotation();
 
 	float GetClimbMoveSpeed() const;
+
+	float GetClimbLeftHandZOffset() const;
+	
+	float GetClimbRightHandZOffset() const;
 
 	////////////////////////////////////////////////////////////////////
 
@@ -180,6 +184,13 @@ private:
 	
 	void RightFootIK(FHitResult& LedgeResult);
 
+	void ClimbMoveIK();
+
+	void ClimbMoveHandIK();
+
+	void ClimbMoveLeftHandIK();
+
+	void ClimbMoveRightHandIK();
 
 	////////////////////////////////////////////////////////////////////
 
@@ -207,7 +218,7 @@ private:
 	AArrowActor* ArrowActor;
 	float ArrowLocationX;
 	float ArrowLocationZ;
-	float CharacterHeight;
+	float CharacterHeightDiff;
 	float CharacterHandUp;
 	float CharacterHandFront;
 	float FirstCameraTargetArmLenght;
@@ -239,6 +250,7 @@ private:
 	float DesireRotationZ;
 	float DesireRotationY;
 	float ClimbMoveCheckDistance;
+	float ClimbHandSpace;
 	TArray<FHitResult> WallHitTraces;
 	TArray<FHitResult> HopHitTraces;
 	FHitResult WallHitResult;
@@ -247,6 +259,8 @@ private:
 	FHitResult WallDepthResult;
 	FHitResult WallVaultResult;
 	FHitResult SecondClimbLedgeResult;
+	FHitResult LeftHandClimbResult;
+	FHitResult RightHandClimbResult;
 	FRotator WallRotation;
 	UParkourVariables* ParkourVariables;
 	FTimerHandle TimerHandle_DelayedFunction;
