@@ -16,12 +16,12 @@
 
 struct FInputActionValue;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PARKOURSYSTEM_API UParkourComponent : public UActorComponent, public IParkourInterface
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	// Sets default values for this component's properties
 	UParkourComponent();
 
@@ -30,10 +30,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourInputAction;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* ParkourDropInputAction;	
-	
+	class UInputAction* ParkourDropInputAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourMoveInputAction;
 
@@ -43,7 +43,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -54,7 +54,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
 	void LeftClimbIK(bool bFirst);
-	
+
 	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
 	void RightClimbIK(bool bFirst);
 private:
@@ -76,7 +76,7 @@ private:
 	void Move(const FInputActionValue& Value);
 
 	void ClimbMove();
-	
+
 	void StopClimbMovement();
 
 	void ResetMovement();
@@ -102,7 +102,7 @@ private:
 
 	void PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
 		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime = 2.0f) const;
-	
+
 	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
 		ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime = 1.0f) const;
 
@@ -138,7 +138,7 @@ private:
 	float GetClimbMoveSpeed() const;
 
 	float GetClimbLeftHandZOffset() const;
-	
+
 	float GetClimbRightHandZOffset() const;
 
 	////////////////////////////////////////////////////////////////////
@@ -151,10 +151,10 @@ private:
 
 	void SetParkourState(const FGameplayTag& NewParkourState);
 
-	void SetClimbStyle (const FGameplayTag& NewClimbStyle);
+	void SetClimbStyle(const FGameplayTag& NewClimbStyle);
 
-	void SetClimbDirection (const FGameplayTag& NewClimbDirection);
-	
+	void SetClimbDirection(const FGameplayTag& NewClimbDirection);
+
 	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
 
 	void SetClimbStyleOnMove(const FHitResult& HitResult, const FRotator& Rotation);
@@ -167,7 +167,7 @@ private:
 	void AddCameraTimeline(float Time);
 
 	void CameraTimelineTick();
-	
+
 	void FinishTimeline();
 
 
@@ -177,11 +177,11 @@ private:
 	void SecondClimbLedgeResultCalculation();
 
 	void LeftHandLedgeIK(FHitResult& LedgeResult);
-	
+
 	void LeftFootIK(FHitResult& LedgeResult);
-	
+
 	void RightHandLedgeIK(FHitResult& LedgeResult);
-	
+
 	void RightFootIK(FHitResult& LedgeResult);
 
 	void ClimbMoveIK();
@@ -191,6 +191,14 @@ private:
 	void ClimbMoveLeftHandIK();
 
 	void ClimbMoveRightHandIK();
+
+	void ClimbMoveFootIK();
+
+	void ClimbMoveLeftFootIK();
+
+	void ClimbMoveRightFootIK();
+
+	void ResetFootIK(bool bIsLeft);
 
 	////////////////////////////////////////////////////////////////////
 

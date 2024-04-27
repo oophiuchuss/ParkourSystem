@@ -40,7 +40,7 @@ UParkourComponent::UParkourComponent()
 	if (MontageAsset.Succeeded())
 		CameraCurve = MontageAsset.Object;
 	else
-		UE_LOG(LogTemp, Warning, TEXT("SetInitializeReference: CameraCurve wasn't found"));
+		UE_LOG(LogTemp, Warning, TEXT("UParkourComponent: CameraCurve wasn't found"));
 }
 
 // Called when the game starts
@@ -756,7 +756,7 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 
 	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourState: AnimInstance does not implement the ABP interface"));
 		return;
 	}
 
@@ -765,7 +765,7 @@ void UParkourComponent::SetParkourState(const FGameplayTag& NewParkourState)
 
 	if (!WidgetActor->WidgetComponent->GetWidget()->GetClass()->ImplementsInterface(UParkourStatsInterface::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: Widget does not implement the Stats interface"));
+		UE_LOG(LogTemp, Warning, TEXT("SetParkourState: Widget does not implement the Stats interface"));
 		return;
 	}
 
@@ -805,7 +805,7 @@ void UParkourComponent::SetClimbStyle(const FGameplayTag& NewClimbStyle)
 
 	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+		UE_LOG(LogTemp, Warning, TEXT("SetClimbStyle: AnimInstance does not implement the ABP interface"));
 		return;
 	}
 
@@ -814,7 +814,7 @@ void UParkourComponent::SetClimbStyle(const FGameplayTag& NewClimbStyle)
 
 	if (!WidgetActor->WidgetComponent->GetWidget()->GetClass()->ImplementsInterface(UParkourStatsInterface::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: Widget does not implement the Stats interface"));
+		UE_LOG(LogTemp, Warning, TEXT("SetClimbStyle: Widget does not implement the Stats interface"));
 		return;
 	}
 
@@ -1051,7 +1051,7 @@ void UParkourComponent::LeftHandLedgeIK(FHitResult& LedgeResult)
 
 						if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 						{
-							UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+							UE_LOG(LogTemp, Warning, TEXT("LeftHandLedgeIK: AnimInstance does not implement the ABP interface"));
 							return;
 						}
 
@@ -1075,7 +1075,7 @@ void UParkourComponent::LeftHandLedgeIK(FHitResult& LedgeResult)
 
 						if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 						{
-							UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+							UE_LOG(LogTemp, Warning, TEXT("LeftHandLedgeIK: AnimInstance does not implement the ABP interface"));
 							return;
 						}
 
@@ -1119,7 +1119,7 @@ void UParkourComponent::LeftFootIK(FHitResult& LedgeResult)
 
 				if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+					UE_LOG(LogTemp, Warning, TEXT("LeftFootIK: AnimInstance does not implement the ABP interface"));
 					return;
 				}
 
@@ -1148,7 +1148,7 @@ void UParkourComponent::LeftFootIK(FHitResult& LedgeResult)
 
 							if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 							{
-								UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+								UE_LOG(LogTemp, Warning, TEXT("LeftFootIK: AnimInstance does not implement the ABP interface"));
 								return;
 							}
 
@@ -1231,7 +1231,7 @@ void UParkourComponent::RightHandLedgeIK(FHitResult& LedgeResult)
 
 						if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 						{
-							UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+							UE_LOG(LogTemp, Warning, TEXT("RightHandLedgeIK: AnimInstance does not implement the ABP interface"));
 							return;
 						}
 
@@ -1255,7 +1255,7 @@ void UParkourComponent::RightHandLedgeIK(FHitResult& LedgeResult)
 
 						if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 						{
-							UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+							UE_LOG(LogTemp, Warning, TEXT("RightHandLedgeIK: AnimInstance does not implement the ABP interface"));
 							return;
 						}
 
@@ -1299,7 +1299,7 @@ void UParkourComponent::RightFootIK(FHitResult& LedgeResult)
 
 				if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+					UE_LOG(LogTemp, Warning, TEXT("RightFootIK: AnimInstance does not implement the ABP interface"));
 					return;
 				}
 
@@ -1328,7 +1328,7 @@ void UParkourComponent::RightFootIK(FHitResult& LedgeResult)
 
 							if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 							{
-								UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+								UE_LOG(LogTemp, Warning, TEXT("RightFootIK: AnimInstance does not implement the ABP interface"));
 								return;
 							}
 
@@ -1754,7 +1754,7 @@ void UParkourComponent::SetClimbDirection(const FGameplayTag& NewClimbDirection)
 
 	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SetParkourAction: AnimInstance does not implement the ABP interface"));
+		UE_LOG(LogTemp, Warning, TEXT("SetClimbDirection: AnimInstance does not implement the ABP interface"));
 		return;
 	}
 
@@ -1967,6 +1967,7 @@ void UParkourComponent::ClimbMoveIK()
 		return;
 
 	ClimbMoveHandIK();
+	ClimbMoveFootIK();
 }
 
 void UParkourComponent::ClimbMoveHandIK()
@@ -1976,7 +1977,7 @@ void UParkourComponent::ClimbMoveHandIK()
 
 	ClimbMoveLeftHandIK();
 	ClimbMoveRightHandIK();
-	
+
 }
 
 void UParkourComponent::ClimbMoveLeftHandIK()
@@ -2022,8 +2023,9 @@ void UParkourComponent::ClimbMoveLeftHandIK()
 	FQuat QuatRotation = FRotationMatrix::MakeFromX(LeftHandClimbResult.ImpactNormal).ToQuat();
 	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
-	FVector LeftHandLcoation = LeftHandClimbResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(CharacterHandFront, 0.0f, ClimbStyle) - 3.0f);
-	LeftHandLcoation.Z = HitResult.ImpactPoint.Z - 9.0f + CharacterHeightDiff + CharacterHandUp + GetClimbLeftHandZOffset();
+	FVector LeftHandLocation = LeftHandClimbResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(CharacterHandFront, 0.0f, ClimbStyle) - 3.0f);
+	LeftHandLocation.Z = HitResult.ImpactPoint.Z + CharacterHeightDiff + CharacterHandUp + GetClimbLeftHandZOffset();
+	LeftHandLocation.Z -= UParkourFunctionLibrary::SelectClimbStyleFloat(9.0f, 8.0f, ClimbStyle);
 
 	FRotator LeftHandRotation = FRotationMatrix::MakeFromX(LeftHandClimbResult.ImpactNormal).Rotator();
 	UParkourFunctionLibrary::ReverseRotation(LeftHandRotation);
@@ -2033,12 +2035,12 @@ void UParkourComponent::ClimbMoveLeftHandIK()
 
 	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ParkourHandIK: AnimInstance does not implement the ABP interface"));
+		UE_LOG(LogTemp, Warning, TEXT("ClimbMoveLeftHandIK: AnimInstance does not implement the ABP interface"));
 		return;
 	}
 
 	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
-	ParkourABPInterface->Execute_SetLeftHandLedgeLocation(AnimInstance, LeftHandLcoation);
+	ParkourABPInterface->Execute_SetLeftHandLedgeLocation(AnimInstance, LeftHandLocation);
 	ParkourABPInterface->Execute_SetLeftHandLedgeRotation(AnimInstance, LeftHandRotation);
 }
 
@@ -2085,8 +2087,9 @@ void UParkourComponent::ClimbMoveRightHandIK()
 	FQuat QuatRotation = FRotationMatrix::MakeFromX(RightHandClimbResult.ImpactNormal).ToQuat();
 	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
-	FVector RightHandLcoation = RightHandClimbResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(CharacterHandFront, 0.0f, ClimbStyle) - 3.0f);
-	RightHandLcoation.Z = HitResult.ImpactPoint.Z - 9.0f + CharacterHeightDiff + CharacterHandUp + GetClimbRightHandZOffset();
+	FVector RightHandLocation = RightHandClimbResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(CharacterHandFront, 0.0f, ClimbStyle) - 3.0f);
+	RightHandLocation.Z = HitResult.ImpactPoint.Z + CharacterHeightDiff + CharacterHandUp + GetClimbRightHandZOffset();
+	RightHandLocation.Z -= UParkourFunctionLibrary::SelectClimbStyleFloat(9.0f, 8.0f, ClimbStyle);
 
 	FRotator RightHandRotation = FRotationMatrix::MakeFromX(RightHandClimbResult.ImpactNormal).Rotator();
 	UParkourFunctionLibrary::ReverseRotation(RightHandRotation);
@@ -2096,12 +2099,12 @@ void UParkourComponent::ClimbMoveRightHandIK()
 
 	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ParkourHandIK: AnimInstance does not implement the ABP interface"));
+		UE_LOG(LogTemp, Warning, TEXT("ClimbMoveRightHandIK: AnimInstance does not implement the ABP interface"));
 		return;
 	}
 
 	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
-	ParkourABPInterface->Execute_SetRightHandLedgeLocation(AnimInstance, RightHandLcoation);
+	ParkourABPInterface->Execute_SetRightHandLedgeLocation(AnimInstance, RightHandLocation);
 	ParkourABPInterface->Execute_SetRightHandLedgeRotation(AnimInstance, RightHandRotation);
 }
 
@@ -2115,13 +2118,7 @@ float UParkourComponent::GetClimbLeftHandZOffset() const
 
 	float OriginalOffset = AnimInstance->GetCurveValue("Hand_L Z") - UParkourFunctionLibrary::SelectClimbStyleFloat(BracedDirectionSubtract, FreeHangDirectionSubtract, ClimbStyle);
 
-	float Result = FMath::Clamp(OriginalOffset, 0.0f, 5.0f);
-
-	FString tmp = ClimbDirection.GetTagName().ToString();
-
-	UE_LOG(LogTemp, Warning, TEXT("%d %s"), Result, *tmp);
-
-	return Result;
+	return FMath::Clamp(OriginalOffset, 0.0f, 5.0f);
 }
 
 float UParkourComponent::GetClimbRightHandZOffset() const
@@ -2134,11 +2131,138 @@ float UParkourComponent::GetClimbRightHandZOffset() const
 
 	float OriginalOffset = AnimInstance->GetCurveValue("Hand_R Z") - UParkourFunctionLibrary::SelectClimbStyleFloat(BracedDirectionSubtract, FreeHangDirectionSubtract, ClimbStyle);
 
-	float Result = FMath::Clamp(OriginalOffset, 0.0f, 5.0f);
+	return FMath::Clamp(OriginalOffset, 0.0f, 5.0f);
+}
 
-	FString tmp = ClimbDirection.GetTagName().ToString();
+void UParkourComponent::ClimbMoveFootIK()
+{
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb") || !bFirstClimbMove)
+		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("%d %s"), Result, *tmp);
+	ClimbMoveLeftFootIK();
+	ClimbMoveRightFootIK();
+}
 
-	return Result;
+void UParkourComponent::ClimbMoveLeftFootIK()
+{
+	if (AnimInstance->GetCurveValue("LeftFootIK") != 1.0f)
+	{
+		ResetFootIK(true);
+		return;
+	}
+
+	FHitResult LeftFootHitResult;
+
+	bool bShouldBreak = false;
+	for (int32 i = 0; i < 5; i++)
+	{
+		for (int32 j = 0; j < 5; j++)
+		{
+			FVector StartLocation = CharacterMesh->GetSocketLocation("ik_foot_l");
+			StartLocation.Z = CharacterMesh->GetSocketLocation("hand_l").Z - 135.0f + (j * 5.0f);
+			StartLocation += Character->GetActorRightVector() * (13.0f + i * 4.0f);
+			StartLocation -= Character->GetActorForwardVector() * 30.0f;
+
+			FVector EndLocation = StartLocation + Character->GetActorForwardVector() * 100.0f;
+
+
+			PerformSphereTraceByChannel(Character->GetWorld(), LeftFootHitResult, StartLocation, EndLocation,15.0f,  ECC_Visibility, bDrawDebug, 0.0f);
+
+			if (!LeftFootHitResult.bBlockingHit || LeftFootHitResult.bStartPenetrating)
+				continue;
+
+			bShouldBreak = true;
+			break;
+		}
+
+		if (bShouldBreak)
+			break;
+	}
+
+	if (!bShouldBreak)
+		return;
+
+	FQuat QuatRotation = FRotationMatrix::MakeFromX(LeftFootHitResult.ImpactNormal).ToQuat();
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector LeftFootLocation = LeftFootHitResult.ImpactPoint + ForwardVector * 18.0f;
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ClimbMoveLeftFootIK: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetLeftFootLocation(AnimInstance, LeftFootLocation);
+}
+
+void UParkourComponent::ClimbMoveRightFootIK()
+{
+	if (AnimInstance->GetCurveValue("RightFootIK") != 1.0f)
+	{
+		ResetFootIK(false);
+		return;
+	}
+
+	FHitResult RightFootHitResult;
+
+	bool bShouldBreak = false;
+	for (int32 i = 0; i < 5; i++)
+	{
+		for (int32 j = 0; j < 5; j++)
+		{
+			FVector StartLocation = CharacterMesh->GetSocketLocation("ik_foot_r");
+			StartLocation.Z = CharacterMesh->GetSocketLocation("hand_r").Z - 125.0f + (j * 5.0f);
+			StartLocation += Character->GetActorRightVector() * (-13.0f + i * 4.0f);
+			StartLocation -= Character->GetActorForwardVector() * 30.0f;
+
+			FVector EndLocation = StartLocation + Character->GetActorForwardVector() * 100.0f;
+
+
+			PerformSphereTraceByChannel(Character->GetWorld(), RightFootHitResult, StartLocation, EndLocation, 15.0f, ECC_Visibility, bDrawDebug, 0.0f);
+
+			if (!RightFootHitResult.bBlockingHit || RightFootHitResult.bStartPenetrating)
+				continue;
+
+			bShouldBreak = true;
+			break;
+		}
+
+		if (bShouldBreak)
+			break;
+	}
+
+	if (!bShouldBreak)
+		return;
+
+	FQuat QuatRotation = FRotationMatrix::MakeFromX(RightFootHitResult.ImpactNormal).ToQuat();
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector RightFootLocation = RightFootHitResult.ImpactPoint + ForwardVector * 18.0f;
+
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ClimbMoveRightFootIK: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+	ParkourABPInterface->Execute_SetRightFootLocation(AnimInstance, RightFootLocation);
+}
+
+void UParkourComponent::ResetFootIK(bool bIsLeft)
+{
+	if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ResetFootIK: AnimInstance does not implement the ABP interface"));
+		return;
+	}
+
+	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+
+	if (bIsLeft)
+		ParkourABPInterface->Execute_SetLeftFootLocation(AnimInstance, CharacterMesh->GetSocketLocation("ik_foot_l"));
+	else
+		ParkourABPInterface->Execute_SetRightFootLocation(AnimInstance, CharacterMesh->GetSocketLocation("ik_foot_r"));
 }
