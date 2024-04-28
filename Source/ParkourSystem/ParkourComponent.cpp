@@ -1657,8 +1657,10 @@ void UParkourComponent::FindDropDownHangLocation()
 	QuatRotation = FQuat(WallRotation);
 	ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
-	StartLocation = WallHitResult.ImpactPoint + (ForwardVector * 2.0f) + FVector(0.0f, 0.0f, 7.0f);
-	EndLocation = StartLocation + FVector(0.0f, 0.0f, 7.0f);
+	StartLocation = WallHitResult.ImpactPoint + (ForwardVector * 2.0f);
+	StartLocation.Z += 7.0f;
+	EndLocation = StartLocation;
+	EndLocation.Z -= 7.0f;
 
 	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug);
 
