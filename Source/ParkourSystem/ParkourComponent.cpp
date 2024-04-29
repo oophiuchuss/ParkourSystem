@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "TimerManager.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 #include "ParkourFunctionLibrary.h"
 #include "ParkourABPInterface.h"
@@ -734,7 +735,7 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	{
 		ParkourVariables = NewObject<UFreeHangDropDownDT>();
 	}
-	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
+	else
 	{
 		ResetParkourResults();
 		return;
@@ -1090,75 +1091,91 @@ void UParkourComponent::LeftHandLedgeIK(FHitResult& LedgeResult)
 		if (bShouldBreak)
 			break;
 	}
+
+	//TODO fix when hand could not find location
+	if (!bShouldBreak)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("IK WORKS"));
+		FVector LeftHandLedgeLocation = CharacterMesh->GetSocketLocation("hand_l");
+
+		if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LeftHandLedgeIK: AnimInstance does not implement the ABP interface"));
+			return;
+		}
+
+		IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+		ParkourABPInterface->Execute_SetLeftHandLedgeLocation(AnimInstance, LeftHandLedgeLocation);
+	}
 }
 
 void UParkourComponent::LeftFootIK(FHitResult& LedgeResult)
 {
-	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+	if (!ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+		return;
+
+	for (int32 i = 0; i < 3; i++)
 	{
-		for (int32 i = 0; i < 3; i++)
+		FQuat QuatRotation = FQuat(WallRotation);
+		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+		FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+
+		FVector StartLocation = LedgeResult.ImpactPoint - (RightVector * 7.0f) + (ForwardVector * -30.0f);
+		StartLocation.Z += i * 5.0f + (CharacterHeightDiff - 150.0f);
+		FVector EndLocation = StartLocation + (ForwardVector * 60.0f);
+
+
+		FHitResult HitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
+
+		if (HitResult.bBlockingHit)
 		{
-			FQuat QuatRotation = FQuat(WallRotation);
-			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+			QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
+			ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
-			FVector StartLocation = LedgeResult.ImpactPoint - (RightVector * 7.0f) + (ForwardVector * -30.0f);
-			StartLocation.Z += i * 5.0f + (CharacterHeightDiff - 150.0f);
-			FVector EndLocation = StartLocation + (ForwardVector * 60.0f);
+			FVector LeftFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
 
-
-			FHitResult HitResult;
-			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
-
-			if (HitResult.bBlockingHit)
+			if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 			{
-				QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
-				ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-
-				FVector LeftFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
-
-				if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("LeftFootIK: AnimInstance does not implement the ABP interface"));
-					return;
-				}
-
-				IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
-				ParkourABPInterface->Execute_SetLeftFootLocation(AnimInstance, LeftFootLocation);
-				break;
+				UE_LOG(LogTemp, Warning, TEXT("LeftFootIK: AnimInstance does not implement the ABP interface"));
+				return;
 			}
-			else
-				if (i == 2)
+
+			IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+			ParkourABPInterface->Execute_SetLeftFootLocation(AnimInstance, LeftFootLocation);
+			break;
+		}
+		else
+			if (i == 2)
+			{
+				for (int32 j = 0; j < 5; j++)
 				{
-					for (int32 j = 0; j < 5; j++)
+					StartLocation = LedgeResult.ImpactPoint + (ForwardVector * -30.0f);
+					StartLocation.Z += j * 5.0f + (CharacterHeightDiff - 150.0f);
+					EndLocation = StartLocation + (ForwardVector * 60.0f);
+
+
+					PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
+
+					if (HitResult.bBlockingHit)
 					{
-						StartLocation = LedgeResult.ImpactPoint + (ForwardVector * -30.0f);
-						StartLocation.Z += j * 5.0f + (CharacterHeightDiff - 150.0f);
-						EndLocation = StartLocation + (ForwardVector * 60.0f);
+						QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
+						ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
+						FVector LeftFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
 
-						PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
-
-						if (HitResult.bBlockingHit)
+						if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 						{
-							QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
-							ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-
-							FVector LeftFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
-
-							if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
-							{
-								UE_LOG(LogTemp, Warning, TEXT("LeftFootIK: AnimInstance does not implement the ABP interface"));
-								return;
-							}
-
-							IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
-							ParkourABPInterface->Execute_SetLeftFootLocation(AnimInstance, LeftFootLocation);
-							break;
+							UE_LOG(LogTemp, Warning, TEXT("LeftFootIK: AnimInstance does not implement the ABP interface"));
+							return;
 						}
+
+						IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+						ParkourABPInterface->Execute_SetLeftFootLocation(AnimInstance, LeftFootLocation);
+						break;
 					}
 				}
-		}
+			}
 	}
 }
 
@@ -1274,71 +1291,71 @@ void UParkourComponent::RightHandLedgeIK(FHitResult& LedgeResult)
 
 void UParkourComponent::RightFootIK(FHitResult& LedgeResult)
 {
-	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+	if (!ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+		return;
+
+	for (int32 i = 0; i < 3; i++)
 	{
-		for (int32 i = 0; i < 3; i++)
+		FQuat QuatRotation = FQuat(WallRotation);
+		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+		FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+
+		FVector StartLocation = LedgeResult.ImpactPoint + (RightVector * 9.0f) + (ForwardVector * -30.0f);
+		StartLocation.Z += i * 5.0f + (CharacterHeightDiff - 140.0f);
+		FVector EndLocation = StartLocation + (ForwardVector * 60.0f);
+
+
+		FHitResult HitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
+
+		if (HitResult.bBlockingHit)
 		{
-			FQuat QuatRotation = FQuat(WallRotation);
-			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+			QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
+			ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
-			FVector StartLocation = LedgeResult.ImpactPoint + (RightVector * 9.0f) + (ForwardVector * -30.0f);
-			StartLocation.Z += i * 5.0f + (CharacterHeightDiff - 140.0f);
-			FVector EndLocation = StartLocation + (ForwardVector * 60.0f);
+			FVector RightFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
 
-
-			FHitResult HitResult;
-			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
-
-			if (HitResult.bBlockingHit)
+			if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 			{
-				QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
-				ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-
-				FVector RightFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
-
-				if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("RightFootIK: AnimInstance does not implement the ABP interface"));
-					return;
-				}
-
-				IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
-				ParkourABPInterface->Execute_SetRightFootLocation(AnimInstance, RightFootLocation);
-				break;
+				UE_LOG(LogTemp, Warning, TEXT("RightFootIK: AnimInstance does not implement the ABP interface"));
+				return;
 			}
-			else
-				if (i == 2)
+
+			IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+			ParkourABPInterface->Execute_SetRightFootLocation(AnimInstance, RightFootLocation);
+			break;
+		}
+		else
+			if (i == 2)
+			{
+				for (int32 j = 0; j < 5; j++)
 				{
-					for (int32 j = 0; j < 5; j++)
+					StartLocation = LedgeResult.ImpactPoint + (ForwardVector * -30.0f);
+					StartLocation.Z += j * 5.0f + (CharacterHeightDiff - 140.0f);
+					EndLocation = StartLocation + (ForwardVector * 60.0f);
+
+
+					PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
+
+					if (HitResult.bBlockingHit)
 					{
-						StartLocation = LedgeResult.ImpactPoint + (ForwardVector * -30.0f);
-						StartLocation.Z += j * 5.0f + (CharacterHeightDiff - 140.0f);
-						EndLocation = StartLocation + (ForwardVector * 60.0f);
+						QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
+						ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
+						FVector RightFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
 
-						PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 6.0f, ECC_Visibility, bDrawDebug);
-
-						if (HitResult.bBlockingHit)
+						if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
 						{
-							QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
-							ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-
-							FVector RightFootLocation = HitResult.ImpactPoint + (ForwardVector * -17.0f);
-
-							if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
-							{
-								UE_LOG(LogTemp, Warning, TEXT("RightFootIK: AnimInstance does not implement the ABP interface"));
-								return;
-							}
-
-							IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
-							ParkourABPInterface->Execute_SetRightFootLocation(AnimInstance, RightFootLocation);
-							break;
+							UE_LOG(LogTemp, Warning, TEXT("RightFootIK: AnimInstance does not implement the ABP interface"));
+							return;
 						}
+
+						IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+						ParkourABPInterface->Execute_SetRightFootLocation(AnimInstance, RightFootLocation);
+						break;
 					}
 				}
-		}
+			}
 	}
 }
 
@@ -1779,144 +1796,236 @@ void UParkourComponent::ResetMovement()
 
 void UParkourComponent::ClimbMove()
 {
-	if (!ParkourActionTag.GetTagName().IsEqual("Parkour.Action.CornerMove"))
+	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.CornerMove"))
+		return;
+
+	if (FMath::Abs(GetHorizontalAxis()) <= 0.7f)
 	{
-		if (FMath::Abs(GetHorizontalAxis()) <= 0.7f)
+		StopClimbMovement();
+		return;
+	}
+
+	FName NewDirectionString = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
+
+	SetClimbDirection(FGameplayTag::RequestGameplayTag(NewDirectionString));
+
+	bool bShouldBreak = false;
+	FHitResult OuterLoopHitResult;
+	FHitResult InnerLoopHitResult;
+	FVector StartLocation;
+	FVector EndLocation;
+	FQuat QuatRotation;
+
+	for (int32 i = 0; i < 3; i++)
+	{
+		QuatRotation = FQuat(ArrowActor->GetArrowComponent()->GetComponentRotation());
+		FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+		StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation() + (ClimbMoveCheckDistance * GetHorizontalAxis() * RightVector);
+		StartLocation.Z -= i * 10.0f;
+		EndLocation = StartLocation + ForwardVector * 60.0f;
+
+		OuterLoopHitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+		if (OuterLoopHitResult.bStartPenetrating)
+			continue;
+
+		int32 OutCornerIndex;
+		if (CheckOutCorner(OutCornerIndex))
+		{
+			OutCornerMove(OutCornerIndex);
+			break;
+		}
+
+		if (!OuterLoopHitResult.bBlockingHit)
 		{
 			StopClimbMovement();
-			return;
+			continue;
 		}
 
-		FName NewDirectionString = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
-
-		SetClimbDirection(FGameplayTag::RequestGameplayTag(NewDirectionString));
-
-		bool bShouldBreak = false;
-		FHitResult OuterLoopHitResult;
-		FHitResult InnerLoopHitResult;
-		FVector StartLocation;
-		FVector EndLocation;
-		FQuat QuatRotation;
-
-		for (int32 i = 0; i < 3; i++)
-		{
-			QuatRotation = FQuat(ArrowActor->GetArrowComponent()->GetComponentRotation());
-			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
-			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-
-			StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation() + (ClimbMoveCheckDistance * GetHorizontalAxis() * RightVector);
-			StartLocation.Z -= i * 10.0f;
-			EndLocation = StartLocation + ForwardVector * 60.0f;
-
-			OuterLoopHitResult;
-			PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
-
-			if (OuterLoopHitResult.bStartPenetrating || !OuterLoopHitResult.bBlockingHit)
-			{
-				//TODO should bStartPenetrating also stop movement?
-				StopClimbMovement();
-				continue;
-			}
-
-			for (int32 j = 0; j < 7; j++)
-			{
-				QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
-				ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-
-				StartLocation = OuterLoopHitResult.ImpactPoint + ForwardVector * 2.0f;
-				StartLocation.Z += 5.0f * (j + 1);
-
-				EndLocation = StartLocation;
-				EndLocation.Z -= 55.0f;
-
-				PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug);
-
-				if (InnerLoopHitResult.bStartPenetrating)
-				{
-					if (i == 2 && j == 6)
-					{
-						StopClimbMovement();
-						return;
-					}
-
-					continue;
-				}
-
-				if (InnerLoopHitResult.bBlockingHit)
-					bShouldBreak = true;
-				else
-					StopClimbMovement();
-
-				break;
-			}
-
-			if (bShouldBreak)
-				break;
-		}
-
-		if (!bShouldBreak)
-			return;
-
-		for (int32 i = 0; i < 6; i++)
+		for (int32 j = 0; j < 7; j++)
 		{
 			QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
-			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+			ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
-			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-			float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(-44.0f, -7.0f, ClimbStyle);
+			StartLocation = OuterLoopHitResult.ImpactPoint + ForwardVector * 2.0f;
+			StartLocation.Z += 5.0f * (j + 1);
 
-			ForwardVector* StyleMultiplier + OuterLoopHitResult.ImpactPoint;
+			EndLocation = StartLocation;
+			EndLocation.Z -= 55.0f;
 
-			StartLocation = InnerLoopHitResult.ImpactPoint;
+			PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug);
 
-			StartLocation.Z += i * 5.0f + 2.0f;
-			EndLocation = StartLocation + RightVector * GetHorizontalAxis() * 15.0f;
-			FHitResult LineTraceHitResult;
-			PerformLineTraceByChannel(Character->GetWorld(), LineTraceHitResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
-
-			if (!LineTraceHitResult.bBlockingHit)
+			if (InnerLoopHitResult.bStartPenetrating)
 			{
-				if (CheckClimbMoveSurface(OuterLoopHitResult))
-					WallRotation = QuatRotation.Rotator();
-				else
+				if (i == 2 && j == 6)
 				{
 					StopClimbMovement();
 					return;
 				}
 
-				break;
+				continue;
 			}
-			else if (i == 5)
+
+			if (InnerLoopHitResult.bBlockingHit)
+				bShouldBreak = true;
+			else
+				StopClimbMovement();
+
+			break;
+		}
+
+		if (bShouldBreak)
+			break;
+	}
+
+	if (!bShouldBreak)
+		return;
+
+	for (int32 i = 0; i < 6; i++)
+	{
+		QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
+		FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+
+		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+		float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(-44.0f, -7.0f, ClimbStyle);
+
+		ForwardVector* StyleMultiplier + OuterLoopHitResult.ImpactPoint;
+
+		StartLocation = InnerLoopHitResult.ImpactPoint;
+
+		StartLocation.Z += i * 5.0f + 2.0f;
+		EndLocation = StartLocation + RightVector * GetHorizontalAxis() * 15.0f;
+		FHitResult LineTraceHitResult;
+		PerformLineTraceByChannel(Character->GetWorld(), LineTraceHitResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
+
+		if (!LineTraceHitResult.bBlockingHit)
+		{
+			if (CheckClimbMoveSurface(OuterLoopHitResult))
+				WallRotation = QuatRotation.Rotator();
+			else
 			{
 				StopClimbMovement();
 				return;
 			}
+
+			break;
 		}
-
-		QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
-		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-		FVector NewCharacterLocation;
-		FRotator NewCharacterRotation;
-
-		float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(-44.0f, -7.0f, ClimbStyle);
-		FVector OuterLoopVector = OuterLoopHitResult.ImpactPoint + ForwardVector * StyleMultiplier;
-
-		float StyleSub = UParkourFunctionLibrary::SelectClimbStyleFloat(107.0f, 115.0f, ClimbStyle);
-		float TargetInterpZ = InnerLoopHitResult.ImpactPoint.Z + CharacterHeightDiff - StyleSub;
-
-		float DeltaSeconds = Character->GetWorld()->GetDeltaSeconds();
-		float StyleInterpSpeed = UParkourFunctionLibrary::SelectClimbStyleFloat(2.7f, 1.8f, ClimbStyle);
-		NewCharacterLocation.X = FMath::FInterpTo(Character->GetActorLocation().X, OuterLoopVector.X, DeltaSeconds, GetClimbMoveSpeed());
-		NewCharacterLocation.Y = FMath::FInterpTo(Character->GetActorLocation().Y, OuterLoopVector.Y, DeltaSeconds, GetClimbMoveSpeed());
-		NewCharacterLocation.Z = FMath::FInterpTo(Character->GetActorLocation().Z, TargetInterpZ, DeltaSeconds, StyleInterpSpeed);
-
-		NewCharacterRotation = FMath::RInterpTo(Character->GetActorRotation(), WallRotation, DeltaSeconds, 4.0f);
-		Character->SetActorLocationAndRotation(NewCharacterLocation, NewCharacterRotation);
-
-		SetClimbStyleOnMove(InnerLoopHitResult, WallRotation);
-
-		bFirstClimbMove = true;
+		else if (i == 5)
+		{
+			StopClimbMovement();
+			return;
+		}
 	}
+
+	QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+	FVector NewCharacterLocation;
+	FRotator NewCharacterRotation;
+
+	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(-44.0f, -7.0f, ClimbStyle);
+	FVector OuterLoopVector = OuterLoopHitResult.ImpactPoint + ForwardVector * StyleMultiplier;
+
+	float StyleSub = UParkourFunctionLibrary::SelectClimbStyleFloat(107.0f, 115.0f, ClimbStyle);
+	float TargetInterpZ = InnerLoopHitResult.ImpactPoint.Z + CharacterHeightDiff - StyleSub;
+
+	float DeltaSeconds = Character->GetWorld()->GetDeltaSeconds();
+	float StyleInterpSpeed = UParkourFunctionLibrary::SelectClimbStyleFloat(2.7f, 1.8f, ClimbStyle);
+	NewCharacterLocation.X = FMath::FInterpTo(Character->GetActorLocation().X, OuterLoopVector.X, DeltaSeconds, GetClimbMoveSpeed());
+	NewCharacterLocation.Y = FMath::FInterpTo(Character->GetActorLocation().Y, OuterLoopVector.Y, DeltaSeconds, GetClimbMoveSpeed());
+	NewCharacterLocation.Z = FMath::FInterpTo(Character->GetActorLocation().Z, TargetInterpZ, DeltaSeconds, StyleInterpSpeed);
+
+	NewCharacterRotation = FMath::RInterpTo(Character->GetActorRotation(), WallRotation, DeltaSeconds, 4.0f);
+	Character->SetActorLocationAndRotation(NewCharacterLocation, NewCharacterRotation);
+
+	SetClimbStyleOnMove(InnerLoopHitResult, WallRotation);
+
+	bFirstClimbMove = true;
+}
+
+void UParkourComponent::CornerMove(const FVector& TargerRelativeLocation, const FRotator& TargerRelativeRotation)
+{
+	bFirstClimbMove = true;
+
+	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.CornerMove"));
+
+	FName NewDirectionName = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
+	SetClimbDirection(FGameplayTag::RequestGameplayTag(NewDirectionName));
+
+	float OverTimeByStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(0.5f, 0.9f, ClimbStyle);
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	LatentInfo.Linkage = 0;
+	LatentInfo.UUID = 1;
+	LatentInfo.ExecutionFunction = FName("OnCornerMoveCompleted");
+
+	UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, TargerRelativeLocation, TargerRelativeRotation, false, false,
+		OverTimeByStyle, true, EMoveComponentAction::Type::Move, LatentInfo);
+}
+
+void UParkourComponent::OnCornerMoveCompleted()
+{
+	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+}
+
+void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
+{
+	//TODO Rename hit results
+
+	FVector StartLocation;
+	FVector EndLocation;
+	FHitResult HitResult;
+	FHitResult LoopHitResult;
+
+	FVector RightVector = ArrowActor->GetArrowComponent()->GetComponentQuat().RotateVector(FVector::RightVector);
+
+	StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation();
+	StartLocation.Z -= OutCornerIndex * 10.0f;
+	EndLocation = StartLocation + RightVector * (GetHorizontalAxis() * 60.0f);
+
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 0.f);
+
+	if (!HitResult.bBlockingHit)
+		return;
+
+	for (int32 i = 0; i < 5; i++)
+	{
+		StartLocation = HitResult.ImpactPoint;
+		StartLocation.Z += 5.0f * (i + 1);
+
+		EndLocation = StartLocation;
+		EndLocation.Z -= 5.0f * (i + 10);
+		
+		PerformSphereTraceByChannel(Character->GetWorld(), LoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.f);
+
+		if (!LoopHitResult.bStartPenetrating)
+			break;
+
+		if (i == 4)
+		{
+			StopClimbMovement();
+			return;
+		}
+	}
+
+	if (!LoopHitResult.bBlockingHit)
+	{
+		StopClimbMovement();
+		return;
+	}
+
+	FRotator TargetRelativeRotation = UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal);
+	FQuat QuatRotation = FQuat(TargetRelativeRotation);
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(44.0f, 7.0f, ClimbStyle);
+	FVector TargetRelativeLocation = HitResult.ImpactPoint - ForwardVector * StyleMultiplier;
+	TargetRelativeLocation.Z = LoopHitResult.ImpactPoint.Z - 107.0f;
+
+	CornerMove(TargetRelativeLocation, TargetRelativeRotation);
 }
 
 bool UParkourComponent::CheckClimbMoveSurface(const FHitResult& MovementHitResult) const
@@ -1934,6 +2043,35 @@ bool UParkourComponent::CheckClimbMoveSurface(const FHitResult& MovementHitResul
 	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 82.0f, 5.0f, ECC_Visibility, bDrawDebug);
 
 	return !HitResult.bBlockingHit;
+}
+
+bool UParkourComponent::CheckOutCorner(int32& OutCornerIndex) const
+{
+	bool OutCornerResult;
+	OutCornerIndex = 0;
+	for (int32 i = -2; i < 4; i++)
+	{
+		FVector RightVector = ArrowActor->GetArrowComponent()->GetComponentQuat().RotateVector(FVector::RightVector);
+		FVector ForwardVector = ArrowActor->GetArrowComponent()->GetComponentQuat().RotateVector(FVector::ForwardVector);
+
+		FVector StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation() + RightVector * (GetHorizontalAxis() * 35.0f);
+		StartLocation.Z -= i * 10.0f;
+
+		FVector EndLocation = StartLocation + ForwardVector * 100.0f;
+
+		FHitResult HitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, true, 0.0f);
+
+		OutCornerResult = HitResult.bStartPenetrating;
+
+		if (OutCornerResult)
+		{
+			OutCornerIndex = i;
+			break;
+		}
+	}
+
+	return OutCornerResult;
 }
 
 float UParkourComponent::GetClimbMoveSpeed() const
@@ -2168,7 +2306,7 @@ void UParkourComponent::ClimbMoveLeftFootIK()
 			FVector EndLocation = StartLocation + Character->GetActorForwardVector() * 100.0f;
 
 
-			PerformSphereTraceByChannel(Character->GetWorld(), LeftFootHitResult, StartLocation, EndLocation,15.0f,  ECC_Visibility, bDrawDebug, 0.0f);
+			PerformSphereTraceByChannel(Character->GetWorld(), LeftFootHitResult, StartLocation, EndLocation, 15.0f, ECC_Visibility, bDrawDebug, 0.0f);
 
 			if (!LeftFootHitResult.bBlockingHit || LeftFootHitResult.bStartPenetrating)
 				continue;

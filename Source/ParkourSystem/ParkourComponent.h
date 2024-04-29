@@ -52,6 +52,9 @@ public:
 	UFUNCTION()
 	void OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION()
+	void OnCornerMoveCompleted();
+
 	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
 	void LeftClimbIK(bool bFirst);
 
@@ -76,6 +79,10 @@ private:
 	void Move(const FInputActionValue& Value);
 
 	void ClimbMove();
+
+	void CornerMove(const FVector& TargerRelativeLocation, const FRotator& TargerRelativeRotation);
+
+	void OutCornerMove(const int32& OutCornerIndex);
 
 	void StopClimbMovement();
 
@@ -119,6 +126,8 @@ private:
 	bool CheckAirHang() const;
 
 	bool CheckClimbMoveSurface(const FHitResult& MovementHitResult) const;
+
+	bool CheckOutCorner(int32& OutCornerIndex) const;
 
 	//TODO maybe in other category
 	FRotator GetDesireRotation() const;
