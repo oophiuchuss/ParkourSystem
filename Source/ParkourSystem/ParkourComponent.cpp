@@ -1783,6 +1783,7 @@ void UParkourComponent::SetClimbDirection(const FGameplayTag& NewClimbDirection)
 
 void UParkourComponent::StopClimbMovement()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Green, FString("WORKS"));
 	CharacterMovement->StopMovementImmediately();
 	SetClimbDirection(FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection"));
 }
@@ -1841,8 +1842,12 @@ void UParkourComponent::ClimbMove()
 
 		if (!OuterLoopHitResult.bBlockingHit)
 		{
-			StopClimbMovement();
-			continue;
+			// iterates till i is not the last one
+			if (i != 2)
+				continue;
+
+			CheckInCorner();
+			break;
 		}
 
 		for (int32 j = 0; j < 7; j++)
@@ -1998,7 +2003,7 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 
 		EndLocation = StartLocation;
 		EndLocation.Z -= 5.0f * (i + 10);
-		
+
 		PerformSphereTraceByChannel(Character->GetWorld(), LoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.f);
 
 		if (!LoopHitResult.bStartPenetrating)
@@ -2060,7 +2065,7 @@ bool UParkourComponent::CheckOutCorner(int32& OutCornerIndex) const
 		FVector EndLocation = StartLocation + ForwardVector * 100.0f;
 
 		FHitResult HitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, true, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 0.0f);
 
 		OutCornerResult = HitResult.bStartPenetrating;
 
@@ -2072,6 +2077,109 @@ bool UParkourComponent::CheckOutCorner(int32& OutCornerIndex) const
 	}
 
 	return OutCornerResult;
+}
+
+bool UParkourComponent::CheckInCorner()
+{
+	//TODO is this needed??
+	bool bIsForwardDirection = GetClimbDesireRotation().GetTagName().IsEqual("Parkour.Direction.Forward");
+	bool bIsBackwardDirection = GetClimbDesireRotation().GetTagName().IsEqual("Parkour.Direction.Backward");
+
+	if (bIsForwardDirection || bIsBackwardDirection)
+		return false;
+
+	FQuat QuatArrowRotation = ArrowActor->GetArrowComponent()->GetComponentQuat();
+	FVector ArrowRightVector = QuatArrowRotation.RotateVector(FVector::RightVector);
+	FVector ArrowForwardVector = QuatArrowRotation.RotateVector(FVector::ForwardVector);
+	FVector ArrowLocation = ArrowActor->GetArrowComponent()->GetComponentLocation();
+
+	FHitResult LocalCornerDepth;
+	FHitResult LocalTopResult;
+	FHitResult HitResult;
+	for (int32 i = 0; i < 6; i++)
+	{
+		FVector StartLocation = ArrowLocation + ArrowRightVector * GetHorizontalAxis() * i * 10.0f;
+		StartLocation -= ArrowForwardVector * 10.0f;
+		FVector EndLocation = StartLocation + ArrowForwardVector * 90.0f;
+
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 0.0f);
+
+		if (!HitResult.bBlockingHit)
+			break;
+
+		if (i == 5)
+		{
+			StopClimbMovement();
+			return false;
+		}
+		else
+			LocalCornerDepth = HitResult;
+	}
+
+	for (int32 i = 0; i < 3; i++)
+	{
+
+		FVector StartLocation = LocalCornerDepth.ImpactPoint + ArrowForwardVector * 10.0f;
+		StartLocation += ArrowRightVector * GetHorizontalAxis() * 20.0f;
+		StartLocation.Z -= i * 10.0f;
+		FVector EndLocation = StartLocation - ArrowRightVector * GetHorizontalAxis() * 70.0f;
+
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 0.0f);
+
+		if (HitResult.bBlockingHit)
+			break;
+
+		if (i == 2)
+		{
+			StopClimbMovement();
+			return false;
+		}
+	}
+
+	for (int32 i = 0; i < 5; i++)
+	{
+		FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
+		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+		FVector StartLocation = HitResult.ImpactPoint + ForwardVector * 2.0f;
+		StartLocation.Z += 5.0f * (i + 1);
+		FVector EndLocation = StartLocation;
+		EndLocation.Z -= 5.0f * (i + 10);
+
+		PerformSphereTraceByChannel(Character->GetWorld(), LocalTopResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.0f);
+
+		if (!LocalTopResult.bBlockingHit)
+			break;
+	}
+
+	if (!LocalTopResult.bBlockingHit)
+		return false;
+
+	FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal));
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector StartLocation = LocalTopResult.ImpactPoint - ForwardVector * 50.0f;
+	StartLocation.Z -= CapsuleComponent->GetScaledCapsuleHalfHeight();
+
+	FHitResult CapsuleCheckResult;
+	PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckResult, StartLocation, StartLocation, 90.0f, 27.0f, ECC_Visibility, bDrawDebug);
+
+	if (CapsuleCheckResult.bBlockingHit)
+	{
+		StopClimbMovement();
+		return false;
+	}
+
+	WallRotation = QuatRotation.Rotator();
+
+	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(44.0f, 9.0f, ClimbStyle);
+	FVector TargetRelativeLocation = HitResult.ImpactPoint - ForwardVector * StyleMultiplier;
+	TargetRelativeLocation.Z = LocalTopResult.ImpactPoint.Z;
+	TargetRelativeLocation.Z += CharacterHeightDiff - UParkourFunctionLibrary::SelectClimbStyleFloat(107.0f, 118.0f, ClimbStyle);
+
+	CornerMove(TargetRelativeLocation, WallRotation);
+
+	return false;
 }
 
 float UParkourComponent::GetClimbMoveSpeed() const

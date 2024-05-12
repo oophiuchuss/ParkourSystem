@@ -129,6 +129,8 @@ private:
 
 	bool CheckOutCorner(int32& OutCornerIndex) const;
 
+	bool CheckInCorner();
+
 	//TODO maybe in other category
 	FRotator GetDesireRotation() const;
 
