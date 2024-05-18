@@ -131,10 +131,14 @@ private:
 
 	bool CheckInCorner();
 
+	bool CheckLedgeValid();
+
 	//TODO maybe in other category
 	FRotator GetDesireRotation() const;
 
 	void FindDropDownHangLocation();
+
+	void FindHopLocation();
 
 	void GetClimbForwardValue(float ScaleValue, float& HorizontalForwardValue, float& VerticalForwardValue) const;
 
@@ -151,6 +155,10 @@ private:
 	float GetClimbLeftHandZOffset() const;
 
 	float GetClimbRightHandZOffset() const;
+
+	FGameplayTag SelectHopAction() const;
+
+	FGameplayTag GetHopDirection() const;
 
 	////////////////////////////////////////////////////////////////////
 
@@ -170,6 +178,7 @@ private:
 
 	void SetClimbStyleOnMove(const FHitResult& HitResult, const FRotator& Rotation);
 
+
 	////////////////////////////////////////////////////////////////////
 
 	//DYNAMIC CAMERA
@@ -185,6 +194,8 @@ private:
 	////////////////////////////////////////////////////////////////////
 
 	//INVERSE KINEMATICS
+	void FirstClimbLedgeResultCalculation();
+	
 	void SecondClimbLedgeResultCalculation();
 
 	void LeftHandLedgeIK(FHitResult& LedgeResult);
@@ -246,6 +257,8 @@ private:
 	float RightScale;
 	FVector FirstTargetRelativeLocation;
 	FVector TargetRelativeCameraLocation;
+	FVector LastClimbRightHandLocation;
+	FVector LastClimbLeftHandLocation;
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
@@ -270,6 +283,8 @@ private:
 	float DesireRotationY;
 	float ClimbMoveCheckDistance;
 	float ClimbHandSpace;
+	float VerticalHopDistance;
+	float HorizontalHopDistance;
 	TArray<FHitResult> WallHitTraces;
 	TArray<FHitResult> HopHitTraces;
 	FHitResult WallHitResult;
@@ -277,6 +292,7 @@ private:
 	FHitResult TopHits;
 	FHitResult WallDepthResult;
 	FHitResult WallVaultResult;
+	FHitResult FirstClimbLedgeResult;
 	FHitResult SecondClimbLedgeResult;
 	FHitResult LeftHandClimbResult;
 	FHitResult RightHandClimbResult;

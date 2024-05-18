@@ -9,6 +9,7 @@
 #include "TimerManager.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "GameplayTagsManager.h"
 
 #include "ParkourFunctionLibrary.h"
 #include "ParkourABPInterface.h"
@@ -27,6 +28,9 @@
 #include "FallingFreeHangClimb.h"
 #include "BracedDropDownDT.h"
 #include "FreeHangDropDownDT.h"
+#include "ClimbHopUpDT.h"
+#include "ClimbHopLeftDT.h"
+#include "ClimbHopRightDT.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -73,10 +77,11 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	CameraBoom = NewCameraBoom;
 	MotionWarping = NewMotionWarping;
 	Camera = NewCamera;
-	ParkourActionTag = FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction");
-	ParkourStateTag = FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy");
-	ClimbStyle = FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang");
-	ClimbDirection = FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection");
+	ParkourActionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction"));
+	ParkourStateTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.State.NotBusy"));
+	ClimbStyle = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.FreeHang"));
+	FGameplayTag NoDirectionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection"));
+	ClimbDirection = NoDirectionTag;
 	ClimbMoveCheckDistance = 10.0f;
 	ClimbHandSpace = 20.0f;
 	bCanAutoClimb = true;
@@ -211,7 +216,7 @@ void UParkourComponent::ParkourDrop()
 	{
 		if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 		{
-			SetParkourState(FGameplayTag::RequestGameplayTag("Parkour.State.NotBusy"));
+			SetParkourState(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.State.NotBusy")));
 			bCanManualClimb = false;
 			bCanAutoClimb = false;
 
@@ -536,7 +541,7 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 {
 	if (!WallTopResult.bBlockingHit)
 	{
-		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+		SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 		if (!bAutoClimb)
 		{
 			Character->Jump();
@@ -561,16 +566,16 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 			if (CheckAirHang())
 			{
 				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingBraced"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FallingBraced")));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingFreeHang"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FallingFreeHang")));
 			}
 			else
 			{
 				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.Climb")));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeHangClimb")));
 			}
 		}
 		return;
@@ -578,16 +583,16 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 
 	if (WallHeight > 0 && WallHeight <= 44)
 	{
-		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+		SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 		return;
 	}
 
 	if (WallHeight > 44 && WallHeight < 90)
 	{
 		if (CheckMantleSurface())
-			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.LowMantle"));
+			SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.LowMantle")));
 		else
-			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 
 		return;
 	}
@@ -597,9 +602,9 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 		if (WallHeight <= 120 && VaultHeight <= 120 && WallDepth <= 30)
 		{
 			if (CheckVaultSurface())
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ThinVault"));
+				SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ThinVault")));
 			else
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+				SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 
 			return;
 		}
@@ -609,9 +614,9 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 			if (WallHeight <= 120 && VaultHeight <= 120)
 			{
 				if (CheckVaultSurface())
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Vault"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.Vault")));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 
 				return;
 			}
@@ -619,9 +624,9 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 			if (WallHeight > 120 && WallHeight <= 160 && VaultHeight <= 160)
 			{
 				if (CheckVaultSurface())
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.HighVault"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.HighVault")));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 
 				return;
 			}
@@ -630,9 +635,9 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 
 	if (WallHeight > 90 && WallHeight <= 160)
 		if (CheckMantleSurface())
-			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Mantle"));
+			SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.Mantle")));
 		else
-			SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+			SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 
 	if (WallHeight < 250)
 	{
@@ -643,16 +648,16 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 			if (CheckAirHang())
 			{
 				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingBraced"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FallingBraced")));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FallingFreeHang"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FallingFreeHang")));
 			}
 			else
 			{
 				if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.Climb"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.Climb")));
 				else
-					SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimb"));
+					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeHangClimb")));
 			}
 		}
 	}
@@ -734,6 +739,42 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangDropDown"))
 	{
 		ParkourVariables = NewObject<UFreeHangDropDownDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopUp"))
+	{
+		ParkourVariables = NewObject<UClimbHopUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopLeft"))
+	{
+		ParkourVariables = NewObject<UClimbHopLeftDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopRight"))
+	{
+		ParkourVariables = NewObject<UClimbHopRightDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopLeftUp"))
+	{
+		ParkourVariables = NewObject<UClimbHopUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopRightUp"))
+	{
+		ParkourVariables = NewObject<UClimbHopUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopDown"))
+	{
+		ParkourVariables = NewObject<UClimbHopUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopLeft"))
+	{
+		ParkourVariables = NewObject<UClimbHopUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopRight"))
+	{
+		ParkourVariables = NewObject<UClimbHopUpDT>();
+	}
+	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopDown"))
+	{
+		ParkourVariables = NewObject<UClimbHopUpDT>();
 	}
 	else
 	{
@@ -840,7 +881,8 @@ void UParkourComponent::PreviousStateSettings(const FGameplayTag& PreviousState,
 	{
 		if (NewState.GetTagName().IsEqual("Parkour.State.ReachLedge"))
 		{
-
+			//LastClimbRightHandLocation = CharacterMesh->GetSocketLocation("hand_r");
+			//LastClimbLeftHandLocation = CharacterMesh->GetSocketLocation("hand_l");
 		}
 		else if (NewState.GetTagName().IsEqual("Parkour.State.Mantle"))
 		{
@@ -952,9 +994,36 @@ void UParkourComponent::CheckClimbStyle()
 	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug);
 
 	if (HitResult.bBlockingHit)
-		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.Braced"));
+		SetClimbStyle(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.Braced")));
 	else
-		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang"));
+		SetClimbStyle(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.FreeHang")));
+}
+
+void UParkourComponent::FirstClimbLedgeResultCalculation()
+{
+	FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(WallHitResult.ImpactNormal));
+	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	FVector StartLocation = WallHitResult.ImpactPoint - (ForwardVector * 30.0f);
+	FVector EndLocation = WallHitResult.ImpactPoint + (ForwardVector * 30.0f);
+
+	PerformSphereTraceByChannel(Character->GetWorld(), FirstClimbLedgeResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+	if (!FirstClimbLedgeResult.bBlockingHit)
+		return;
+
+	WallRotation = UParkourFunctionLibrary::NormalReverseRotationZ(FirstClimbLedgeResult.ImpactNormal);
+	QuatRotation = FQuat(WallRotation);
+	ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+
+	StartLocation = FirstClimbLedgeResult.ImpactPoint + (ForwardVector * 2.0f) + FVector(0.0f, 0.0f, 5.0f);
+	EndLocation = StartLocation - FVector(0.0f, 0.0f, 55.0f);
+
+	FHitResult HitResult;
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+	FirstClimbLedgeResult.Location = HitResult.Location;
+	FirstClimbLedgeResult.ImpactPoint.Z = HitResult.ImpactPoint.Z;
 }
 
 void UParkourComponent::SecondClimbLedgeResultCalculation()
@@ -999,6 +1068,17 @@ void UParkourComponent::LeftClimbIK(bool bFirst)
 			}
 		}
 	}
+	/*else
+	{
+		if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("LeftClimbIK: AnimInstance does not implement the ABP interface"));
+			return;
+		}
+
+		IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+		ParkourABPInterface->Execute_SetLeftHandLedgeLocation(AnimInstance, LastClimbLeftHandLocation);
+	}*/
 }
 
 void UParkourComponent::LeftHandLedgeIK(FHitResult& LedgeResult)
@@ -1195,6 +1275,18 @@ void UParkourComponent::RightClimbIK(bool bFirst)
 			}
 		}
 	}
+	//TODO find why this is even needed!
+	/*else
+	{
+		if (!AnimInstance->GetClass()->ImplementsInterface(UParkourABPInterface::StaticClass()))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("RightClimbIK: AnimInstance does not implement the ABP interface"));
+			return;
+		}
+
+		IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
+		ParkourABPInterface->Execute_SetRightHandLedgeLocation(AnimInstance, LastClimbRightHandLocation);
+	}*/
 }
 
 void UParkourComponent::RightHandLedgeIK(FHitResult& LedgeResult)
@@ -1445,7 +1537,7 @@ void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bIn
 
 	//TODO There should be ParkourVariables pointer
 	SetParkourState(BlendOutState);
-	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+	SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 }
 
 FVector UParkourComponent::FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const
@@ -1483,6 +1575,7 @@ void UParkourComponent::ResetParkourResults()
 	WallDepthResult = FHitResult();
 	WallVaultResult = FHitResult();
 	TopHits = FHitResult();
+	FirstClimbLedgeResult = FHitResult();
 	SecondClimbLedgeResult = FHitResult();
 }
 
@@ -1538,13 +1631,42 @@ float UParkourComponent::FirstTraceHeight() const
 
 void UParkourComponent::CheckClimbOrHop()
 {
-	if (!CheckMantleSurface())
-		return;
+	FName DesireRotationName = GetClimbDesireRotation().GetTagName();
 
-	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.ClimbingUp"));
+
+	if (DesireRotationName.IsEqual("Parkour.Direction.Forward") ||
+		DesireRotationName.IsEqual("Parkour.Direction.ForwardLeft") ||
+		DesireRotationName.IsEqual("Parkour.Direction.ForwardRight"))
+	{
+		if (!CheckMantleSurface())
+		{
+			FirstClimbLedgeResultCalculation();
+			FindHopLocation();
+			if (CheckLedgeValid())
+			{
+				CheckClimbStyle();
+				SecondClimbLedgeResultCalculation();
+				SetParkourAction(SelectHopAction());
+			}
+			return;
+		}
+
+		if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+			SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbingUp")));
+		else
+			SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeHangClimbUp")));
+	}
 	else
-		SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangClimbUp"));
+	{
+		FirstClimbLedgeResultCalculation();
+		FindHopLocation();
+		if (CheckLedgeValid())
+		{
+			CheckClimbStyle();
+			SecondClimbLedgeResultCalculation();
+			SetParkourAction(SelectHopAction());
+		}
+	}
 }
 
 bool UParkourComponent::CheckAirHang() const
@@ -1580,7 +1702,6 @@ FRotator UParkourComponent::GetDesireRotation() const
 	RotatorFromX.Normalize();
 
 
-	//TODO should check when character has input direction (ForwardScale == 0 && RightScale == 0 is never true)
 	if (ForwardScale == 0 && RightScale == 0)
 		return Character->GetActorRotation();
 	else
@@ -1690,13 +1811,125 @@ void UParkourComponent::FindDropDownHangLocation()
 			SecondClimbLedgeResultCalculation();
 
 			if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.DropDown"));
+				SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.DropDown")));
 			else
-				SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.FreeHangDropDown"));
+				SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeHangDropDown")));
 		}
 		else
 			ResetParkourResults();
 	}
+}
+
+void UParkourComponent::FindHopLocation()
+{
+
+	float VerticalDirectionMultiplier = UParkourFunctionLibrary::SelectDirectionFloat(1.0f, -7.5f, -2.5f, -2.5f, -1.0f, -4.0f, -1.0f, -4.0f, GetClimbDesireRotation());
+	float HorizontalDirectionMultiplier = UParkourFunctionLibrary::SelectDirectionFloat(0.0f, 0.0f, -1.0f, 1.0f, -0.75f, -0.75f, 0.75f, 0.75f, GetClimbDesireRotation());
+	VerticalHopDistance = 25.0f * VerticalDirectionMultiplier;
+	HorizontalHopDistance = 140.0f * HorizontalDirectionMultiplier;
+
+	WallHitTraces.Empty();
+
+	for (int32 i = 0; i < 7; i++)
+	{
+		FVector CharacterUpVector = Character->GetActorQuat().RotateVector(FVector::UpVector);
+		FVector CharacterRightVector = Character->GetActorQuat().RotateVector(FVector::RightVector);
+
+		FQuat WallQuatRotation = FQuat(WallRotation);
+		FVector WallRightVector = WallQuatRotation.RotateVector(FVector::RightVector);
+		FVector WallForwardVector = WallQuatRotation.RotateVector(FVector::ForwardVector);
+
+		FVector StartLocation = WallTopResult.ImpactPoint;
+		StartLocation += CharacterUpVector * VerticalHopDistance;
+		StartLocation += CharacterRightVector * HorizontalHopDistance;
+		StartLocation += WallRightVector * 20.0f * (i - 3);
+		StartLocation -= WallForwardVector * 60.0f;
+
+		FVector EndLocation = StartLocation + WallForwardVector * 120.0f;
+
+		FHitResult OuterLoopTraceResult;
+		PerformLineTraceByChannel(Character->GetWorld(), OuterLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
+
+		HopHitTraces.Empty();
+
+		StartLocation.Z -= 16.0f;
+		EndLocation.Z -= 16.0f;
+
+		for (int32 k = 0; k <= 20; k++)
+		{
+			StartLocation.Z += 8.0f;
+			EndLocation.Z += 8.0f;
+
+			FHitResult InnerLoopTraceResult;
+			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
+
+			if (InnerLoopTraceResult.bStartPenetrating)
+				continue;
+
+			HopHitTraces.Add(InnerLoopTraceResult);
+		}
+
+		for (int32 j = 1; j < HopHitTraces.Num(); j++)
+		{
+			float Distance1 = HopHitTraces[j].bBlockingHit ? HopHitTraces[j].Distance : FVector::Distance(HopHitTraces[j].TraceStart, HopHitTraces[j].TraceEnd);
+			float Distance2 = HopHitTraces[j - 1].bBlockingHit ? HopHitTraces[j - 1].Distance : FVector::Distance(HopHitTraces[j - 1].TraceStart, HopHitTraces[j - 1].TraceEnd);
+
+			if (Distance1 - Distance2 <= 5.0f)
+				continue;
+
+			FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HopHitTraces[j - 1].ImpactNormal));
+			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+
+
+			FVector CapsuleStartLocation = HopHitTraces[j - 1].ImpactPoint - ForwardVector * 40.0f + RightVector * 4.0f;
+			CapsuleStartLocation.Z -= CapsuleComponent->GetUnscaledCapsuleHalfHeight() - 20.0f;
+
+			FVector CapsuleEndLocation = CapsuleStartLocation - RightVector * 8.0f;
+
+			FHitResult CapsuleCheckTrace;
+			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation, CapsuleComponent->GetUnscaledCapsuleHalfHeight() - 20.0f, 25.0f, ECC_Visibility, bDrawDebug);
+
+
+			if (!CapsuleCheckTrace.bBlockingHit)
+				WallHitTraces.Add(HopHitTraces[j - 1]);
+
+			break;
+
+		}
+	}
+
+	if (WallHitTraces.Num() <= 0)
+		return;
+
+	WallHitResult = WallHitTraces[0];
+
+	for (int32 i = 1; i < WallHitTraces.Num(); i++)
+	{
+		float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
+		float Distance2 = FVector::Distance(Character->GetActorLocation(), WallHitResult.ImpactPoint);
+		if (Distance1 <= Distance2)
+			WallHitResult = WallHitTraces[i];
+	}
+
+	if (WallHitResult.bStartPenetrating)
+		return;
+
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
+		WallRotation = UParkourFunctionLibrary::NormalReverseRotationZ(WallHitResult.ImpactNormal);
+
+	FVector StartLocation = WallHitResult.ImpactPoint;
+	StartLocation.Z += 3.0f;
+	FVector EndLocation = StartLocation;
+	EndLocation.Z -= 3.0f;
+
+	FHitResult HitResult;
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+	if (!HitResult.bBlockingHit)
+		return;
+
+	WallTopResult = HitResult;
 }
 
 void UParkourComponent::GetClimbForwardValue(float ScaleValue, float& HorizontalForwardValue, float& VerticalForwardValue) const
@@ -1738,30 +1971,30 @@ FGameplayTag UParkourComponent::GetClimbDesireRotation()
 
 	if (DesireRotationZ >= 0.5f && DesireRotationZ <= 1.0f) {
 		if (DesireRotationY >= -0.5f && DesireRotationY <= 0.0f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Forward");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Forward"));
 		if (DesireRotationY >= 0.5f && DesireRotationY <= 1.0f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.ForwardRight");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.ForwardRight"));
 		if (DesireRotationY >= -1.0f && DesireRotationY <= -0.5f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.ForwardLeft");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.ForwardLeft"));
 	}
 
 	if (DesireRotationZ >= -0.5f && DesireRotationZ <= 0.5f) {
 		if (DesireRotationY >= 0.5f && DesireRotationY <= 1.0f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Right");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Right"));
 		if (DesireRotationY >= -1.0f && DesireRotationY <= -0.5f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Left");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Left"));
 	}
 
 	if (DesireRotationZ >= -1.0f && DesireRotationZ <= -0.5f) {
 		if (DesireRotationY >= -0.5f && DesireRotationY <= 0.5f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.Backward");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Backward"));
 		if (DesireRotationY >= 0.5f && DesireRotationY <= 1.0f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.BackwardRight");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.BackwardRight"));
 		if (DesireRotationY >= -1.0f && DesireRotationY <= -0.5f)
-			return FGameplayTag::RequestGameplayTag("Parkour.Direction.BackwardLeft");
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.BackwardLeft"));
 	}
 
-	return FGameplayTag::RequestGameplayTag("Parkour.Direction.Forward");
+	return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Forward"));
 }
 
 void UParkourComponent::SetClimbDirection(const FGameplayTag& NewClimbDirection)
@@ -1783,16 +2016,15 @@ void UParkourComponent::SetClimbDirection(const FGameplayTag& NewClimbDirection)
 
 void UParkourComponent::StopClimbMovement()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Green, FString("WORKS"));
 	CharacterMovement->StopMovementImmediately();
-	SetClimbDirection(FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection"));
+	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection")));
 }
 
 void UParkourComponent::ResetMovement()
 {
 	ForwardScale = 0.0f;
 	RightScale = 0.0f;
-	SetClimbDirection(FGameplayTag::RequestGameplayTag("Parkour.Direction.NoDirection"));
+	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection")));
 }
 
 void UParkourComponent::ClimbMove()
@@ -1808,7 +2040,7 @@ void UParkourComponent::ClimbMove()
 
 	FName NewDirectionString = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
 
-	SetClimbDirection(FGameplayTag::RequestGameplayTag(NewDirectionString));
+	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName(NewDirectionString)));
 
 	bool bShouldBreak = false;
 	FHitResult OuterLoopHitResult;
@@ -1954,10 +2186,10 @@ void UParkourComponent::CornerMove(const FVector& TargerRelativeLocation, const 
 {
 	bFirstClimbMove = true;
 
-	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.CornerMove"));
+	SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.CornerMove")));
 
 	FName NewDirectionName = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
-	SetClimbDirection(FGameplayTag::RequestGameplayTag(NewDirectionName));
+	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName(NewDirectionName)));
 
 	float OverTimeByStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(0.5f, 0.9f, ClimbStyle);
 
@@ -1973,7 +2205,7 @@ void UParkourComponent::CornerMove(const FVector& TargerRelativeLocation, const 
 
 void UParkourComponent::OnCornerMoveCompleted()
 {
-	SetParkourAction(FGameplayTag::RequestGameplayTag("Parkour.Action.NoAction"));
+	SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 }
 
 void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
@@ -2159,7 +2391,7 @@ bool UParkourComponent::CheckInCorner()
 	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
 	FVector StartLocation = LocalTopResult.ImpactPoint - ForwardVector * 50.0f;
-	StartLocation.Z -= CapsuleComponent->GetScaledCapsuleHalfHeight();
+	StartLocation.Z -= CapsuleComponent->GetUnscaledCapsuleHalfHeight();
 
 	FHitResult CapsuleCheckResult;
 	PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckResult, StartLocation, StartLocation, 90.0f, 27.0f, ECC_Visibility, bDrawDebug);
@@ -2180,6 +2412,17 @@ bool UParkourComponent::CheckInCorner()
 	CornerMove(TargetRelativeLocation, WallRotation);
 
 	return false;
+}
+
+bool UParkourComponent::CheckLedgeValid()
+{
+	if (WallHitTraces.Num() <= 0)
+	{
+		ResetParkourResults();
+		return false;
+	}
+	else
+		return true;
 }
 
 float UParkourComponent::GetClimbMoveSpeed() const
@@ -2203,11 +2446,75 @@ void UParkourComponent::SetClimbStyleOnMove(const FHitResult& HitResult, const F
 	PerformSphereTraceByChannel(Character->GetWorld(), TraceResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug);
 
 	if (TraceResult.bBlockingHit)
-		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.Braced"));
+		SetClimbStyle(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.Braced")));
 	else
-		SetClimbStyle(FGameplayTag::RequestGameplayTag("Parkour.ClimbStyle.FreeHang"));
+		SetClimbStyle(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.FreeHang")));
 }
 
+FGameplayTag UParkourComponent::SelectHopAction() const
+{
+	GetHopDirection();
+
+	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+		return UParkourFunctionLibrary::SelectDirectionHopAction(
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopUp")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopDown")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeftUp")),UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRightUp")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight")),
+			GetHopDirection());
+	else
+		return UParkourFunctionLibrary::SelectDirectionHopAction(
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopUp")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopDown")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
+			GetHopDirection());
+
+}
+
+FGameplayTag UParkourComponent::GetHopDirection() const
+{
+	FVector HopStartLocation = FirstClimbLedgeResult.ImpactPoint;
+	FVector HopEndLocation = SecondClimbLedgeResult.ImpactPoint;
+
+	FRotator LookAtRotation = UKismetMathLibrary::FindRelativeLookAtRotation(Character->GetTransform(), HopEndLocation);
+
+	bool bIsForward = (HopEndLocation.Z - HopStartLocation.Z) > 37.0f;
+	bool bIsBackward = (HopEndLocation.Z - HopStartLocation.Z) < -37.0f;
+
+	bool bIsLeft = LookAtRotation.Yaw >= -135.0f && LookAtRotation.Yaw <= -35.0f;
+	bool bIsRight = LookAtRotation.Yaw >= 35.0f && LookAtRotation.Yaw <= 135.0f;
+
+
+
+
+	UE_LOG(LogTemp, Warning, TEXT("%i, %i, %i, %i"), bIsLeft, bIsRight, bIsForward, bIsBackward);
+
+	if (bIsForward)
+	{
+		if (bIsLeft)
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.ForwardLeft"));
+		else if (bIsRight)
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.ForwardRight"));
+		else
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Forward"));
+	}
+	else if (bIsBackward)
+	{
+		if (bIsLeft)
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.BackwardLeft"));
+		else if (bIsRight)
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.BackwardRight"));
+		else
+			return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Backward"));
+	}
+	else if (bIsLeft)
+		return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Left"));
+	else if (bIsRight)
+		return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Right"));
+	else
+		return UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.Forward"));
+}
 
 void UParkourComponent::ClimbMoveIK()
 {
