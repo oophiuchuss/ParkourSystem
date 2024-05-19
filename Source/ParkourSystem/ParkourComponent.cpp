@@ -1639,7 +1639,6 @@ void UParkourComponent::CheckClimbOrHop()
 {
 	FName DesireRotationName = GetClimbDesireRotation().GetTagName();
 
-
 	if (DesireRotationName.IsEqual("Parkour.Direction.Forward") ||
 		DesireRotationName.IsEqual("Parkour.Direction.ForwardLeft") ||
 		DesireRotationName.IsEqual("Parkour.Direction.ForwardRight"))
@@ -1650,6 +1649,7 @@ void UParkourComponent::CheckClimbOrHop()
 			FindHopLocation();
 			if (CheckLedgeValid())
 			{
+				//TODO extract from it method
 				CheckClimbStyle();
 				SecondClimbLedgeResultCalculation();
 				SetParkourAction(SelectHopAction());
@@ -1887,14 +1887,15 @@ void UParkourComponent::FindHopLocation()
 			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
 
+			float CapsuleHalfHeight = CapsuleComponent->GetUnscaledCapsuleHalfHeight() - 20.0f;
 
 			FVector CapsuleStartLocation = HopHitTraces[j - 1].ImpactPoint - ForwardVector * 40.0f + RightVector * 4.0f;
-			CapsuleStartLocation.Z -= CapsuleComponent->GetUnscaledCapsuleHalfHeight() - 20.0f;
+			CapsuleStartLocation.Z -= CapsuleHalfHeight;
 
 			FVector CapsuleEndLocation = CapsuleStartLocation - RightVector * 8.0f;
 
 			FHitResult CapsuleCheckTrace;
-			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation, CapsuleComponent->GetUnscaledCapsuleHalfHeight() - 20.0f, 25.0f, ECC_Visibility, bDrawDebug);
+			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation, CapsuleHalfHeight, 25.0f, ECC_Visibility, bDrawDebug);
 
 
 			if (!CapsuleCheckTrace.bBlockingHit)
@@ -1906,7 +1907,17 @@ void UParkourComponent::FindHopLocation()
 	}
 
 	if (WallHitTraces.Num() <= 0)
+	{
+		if (GetClimbDesireRotation().GetTagName().IsEqual("Parkour.Direction.Backward"))
+			ParkourDrop();
+		else if (bool bIsOutCorner = OutCornerHop() || CheckCornerHop())
+		{
+			WallRotation = CornerHopRotation;
+			CornerHop(bIsOutCorner);
+		}
+
 		return;
+	}
 
 	WallHitResult = WallHitTraces[0];
 
@@ -2271,6 +2282,149 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 	CornerMove(TargetRelativeLocation, TargetRelativeRotation);
 }
 
+void UParkourComponent::CornerHop(bool bIsOutCorner)
+{
+	float CornerHorizontalHopDistance = bIsOutCorner ? 50.0f : 20.0f;
+	CornerHorizontalHopDistance *= GetHorizontalAxis();
+
+	int32 FirstIndex = GetHorizontalAxis() < 0.0f ? 0 : 4;
+	int32 LastIndex = GetHorizontalAxis() < 0.0f ? 3 : 7;
+
+	WallHitTraces.Empty();
+
+
+	for (int32 i = FirstIndex; i < LastIndex; i++)
+	{
+		FVector CharacterUpVector = Character->GetActorQuat().RotateVector(FVector::UpVector);
+		FVector CharacterRightVector = Character->GetActorQuat().RotateVector(FVector::RightVector);
+
+		FQuat WallQuatRotation = FQuat(WallRotation);
+		FVector WallRightVector = WallQuatRotation.RotateVector(FVector::RightVector);
+		FVector WallForwardVector = WallQuatRotation.RotateVector(FVector::ForwardVector);
+
+		FVector StartLocation = WallTopResult.ImpactPoint;
+		StartLocation += CharacterUpVector * VerticalHopDistance;
+		StartLocation += CharacterRightVector * CornerHorizontalHopDistance;
+		StartLocation += WallRightVector * 20.0f * (i - 3);
+		StartLocation -= WallForwardVector * 60.0f;
+
+		FVector EndLocation = StartLocation + WallForwardVector * 120.0f;
+
+		FHitResult OuterLoopTraceResult;
+		PerformLineTraceByChannel(Character->GetWorld(), OuterLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
+
+		HopHitTraces.Empty();
+
+		StartLocation.Z -= 16.0f;
+		EndLocation.Z -= 16.0f;
+
+		for (int32 k = 0; k <= 20; k++)
+		{
+			StartLocation.Z += 8.0f;
+			EndLocation.Z += 8.0f;
+
+			FHitResult InnerLoopTraceResult;
+			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
+
+			if (InnerLoopTraceResult.bStartPenetrating)
+				continue;
+
+			HopHitTraces.Add(InnerLoopTraceResult);
+		}
+
+		for (int32 j = 1; j < HopHitTraces.Num(); j++)
+		{
+			float Distance1 = HopHitTraces[j].bBlockingHit ? HopHitTraces[j].Distance : FVector::Distance(HopHitTraces[j].TraceStart, HopHitTraces[j].TraceEnd);
+			float Distance2 = HopHitTraces[j - 1].bBlockingHit ? HopHitTraces[j - 1].Distance : FVector::Distance(HopHitTraces[j - 1].TraceStart, HopHitTraces[j - 1].TraceEnd);
+
+			if (Distance1 - Distance2 <= 5.0f)
+				continue;
+
+			FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HopHitTraces[j - 1].ImpactNormal));
+			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
+			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
+
+			float CapsuleHalfHeight = CapsuleComponent->GetUnscaledCapsuleHalfHeight() - 20.0f;
+
+			FVector CapsuleStartLocation = HopHitTraces[j - 1].ImpactPoint - ForwardVector * 40.0f + RightVector * 4.0f;
+			CapsuleStartLocation.Z -= CapsuleHalfHeight;
+
+			FVector CapsuleEndLocation = CapsuleStartLocation - RightVector * 8.0f;
+
+			FHitResult CapsuleCheckTrace;
+			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation, CapsuleHalfHeight, 25.0f, ECC_Visibility, bDrawDebug);
+
+
+			if (!CapsuleCheckTrace.bBlockingHit)
+				WallHitTraces.Add(HopHitTraces[j - 1]);
+
+			break;
+
+		}
+	}
+
+	if (!CheckLedgeValid())
+		return;
+
+	if (WallHitTraces.Num() <= 0)
+		return;
+
+	WallHitResult = WallHitTraces[0];
+
+	for (int32 i = 1; i < WallHitTraces.Num(); i++)
+	{
+		float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
+		float Distance2 = FVector::Distance(Character->GetActorLocation(), WallHitResult.ImpactPoint);
+		if (Distance1 <= Distance2)
+			WallHitResult = WallHitTraces[i];
+	}
+
+	if (WallHitResult.bStartPenetrating)
+		return;
+
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
+		WallRotation = UParkourFunctionLibrary::NormalReverseRotationZ(WallHitResult.ImpactNormal);
+
+	FVector StartLocation = WallHitResult.ImpactPoint;
+	StartLocation.Z += 3.0f;
+	FVector EndLocation = StartLocation;
+	EndLocation.Z -= 3.0f;
+
+	FHitResult HitResult;
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+	if (!HitResult.bBlockingHit)
+		return;
+
+	WallTopResult = HitResult;
+}
+
+bool UParkourComponent::OutCornerHop()
+{
+	FQuat ArrowQuatRotation = ArrowActor->GetArrowComponent()->GetComponentQuat();
+	FVector ArrowRightVector = ArrowQuatRotation.RotateVector(FVector::RightVector);
+	FVector ArrowForwardVector = ArrowQuatRotation.RotateVector(FVector::ForwardVector);
+
+	for (int32 i = 0; i < 23; i++)
+	{
+		FVector StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation() - ArrowForwardVector * 20.0f;
+		StartLocation.Z = Character->GetActorLocation().Z + i * 8.0f;
+		StartLocation -= ArrowRightVector * GetHorizontalAxis() * 20.0f;
+		FVector EndLocation = StartLocation + ArrowRightVector * GetHorizontalAxis() * 120.0f;
+
+		FHitResult HitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+		if (HitResult.bBlockingHit && !HitResult.bStartPenetrating)
+		{
+			CornerHopRotation = UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool UParkourComponent::CheckClimbMoveSurface(const FHitResult& MovementHitResult) const
 {
 	FQuat QuatRotation = FQuat(ArrowActor->GetArrowComponent()->GetComponentRotation());
@@ -2420,6 +2574,57 @@ bool UParkourComponent::CheckInCorner()
 	return false;
 }
 
+bool UParkourComponent::CheckCornerHop()
+{
+	if (GetClimbDesireRotation().GetTagName().IsEqual("Parkour.Direction.Forward") ||
+		GetClimbDesireRotation().GetTagName().IsEqual("Parkour.Direction.Backward"))
+		return false;
+
+	FQuat ArrowQuatRotation = ArrowActor->GetArrowComponent()->GetComponentQuat();
+	FVector ArrowRightVector = ArrowQuatRotation.RotateVector(FVector::RightVector);
+	FVector ArrowForwardVector = ArrowQuatRotation.RotateVector(FVector::ForwardVector);
+
+	FHitResult LocalCornerDepth;
+	for (int32 i = 0; i < 6; i++)
+	{
+		FVector StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation();
+		StartLocation += ArrowRightVector * GetHorizontalAxis() * i * 10.0f;
+		StartLocation -= ArrowForwardVector * 10.0f;
+		FVector EndLocation = StartLocation + ArrowForwardVector * 90.0f;
+
+		FHitResult HitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+		if (!HitResult.bBlockingHit)
+			break;
+		else if (i != 5)
+			LocalCornerDepth = HitResult;
+		else
+			return false;
+	}
+
+	for (int32 i = 0; i < 23; i++)
+	{
+		FVector StartLocation = LocalCornerDepth.ImpactPoint + ArrowForwardVector * 10.0f;
+		StartLocation.Z = Character->GetActorLocation().Z + i * 8.0f;
+		StartLocation += ArrowRightVector * GetHorizontalAxis() * 10.0f;
+		FVector EndLocation = StartLocation - ArrowRightVector * GetHorizontalAxis() * 60.0f;
+
+		FHitResult HitResult;
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+
+		if (HitResult.bBlockingHit && !HitResult.bStartPenetrating)
+		{
+			CornerHopRotation = UParkourFunctionLibrary::NormalReverseRotationZ(HitResult.ImpactNormal);
+			return true;
+		}
+		else if (i == 22)
+			return false;
+	}
+
+	return false;
+}
+
 bool UParkourComponent::CheckLedgeValid()
 {
 	if (WallHitTraces.Num() <= 0)
@@ -2457,24 +2662,48 @@ void UParkourComponent::SetClimbStyleOnMove(const FHitResult& HitResult, const F
 		SetClimbStyle(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.FreeHang")));
 }
 
-FGameplayTag UParkourComponent::SelectHopAction() const
+FGameplayTag UParkourComponent::SelectHopAction()
 {
-	GetHopDirection();
+	FGameplayTag ForwardHopMovementTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopUp"));
 
 	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
+	{
+		if (CheckCornerHop() || OutCornerHop())
+			ForwardHopMovementTag = GetHorizontalAxis() < 0.0f
+			? UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft"))
+			: UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight"));
+
+
 		return UParkourFunctionLibrary::SelectDirectionHopAction(
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopUp")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopDown")),
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight")),
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeftUp")),UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft")),
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRightUp")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight")),
+			ForwardHopMovementTag,
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopDown")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeftUp")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRightUp")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight")),
 			GetHopDirection());
+	}
 	else
+	{
+		if (CheckCornerHop() || OutCornerHop())
+			ForwardHopMovementTag = GetHorizontalAxis() < 0.0f
+			? UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft"))
+			: UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight"));
+
+
 		return UParkourFunctionLibrary::SelectDirectionHopAction(
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopUp")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopDown")),
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")),
-			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")), UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
+			ForwardHopMovementTag,
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopDown")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
+			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
 			GetHopDirection());
+	}
 
 }
 
@@ -2490,11 +2719,6 @@ FGameplayTag UParkourComponent::GetHopDirection() const
 
 	bool bIsLeft = LookAtRotation.Yaw >= -135.0f && LookAtRotation.Yaw <= -35.0f;
 	bool bIsRight = LookAtRotation.Yaw >= 35.0f && LookAtRotation.Yaw <= 135.0f;
-
-
-
-
-	UE_LOG(LogTemp, Warning, TEXT("%i, %i, %i, %i"), bIsLeft, bIsRight, bIsForward, bIsBackward);
 
 	if (bIsForward)
 	{

@@ -84,6 +84,8 @@ private:
 
 	void OutCornerMove(const int32& OutCornerIndex);
 
+	void CornerHop(bool bIsOutCorner);
+
 	void StopClimbMovement();
 
 	void ResetMovement();
@@ -131,6 +133,10 @@ private:
 
 	bool CheckInCorner();
 
+	bool CheckCornerHop();
+	
+	bool OutCornerHop();
+
 	bool CheckLedgeValid();
 
 	//TODO maybe in other category
@@ -156,7 +162,7 @@ private:
 
 	float GetClimbRightHandZOffset() const;
 
-	FGameplayTag SelectHopAction() const;
+	FGameplayTag SelectHopAction();
 
 	FGameplayTag GetHopDirection() const;
 
@@ -270,6 +276,7 @@ private:
 	bool bDrawDebug;
 	bool bOnGround;
 	bool bFirstClimbMove;
+	bool bCanCornerHop;
 	float WallHeight;
 	float WallDepth;
 	float VaultHeight;
@@ -297,6 +304,7 @@ private:
 	FHitResult LeftHandClimbResult;
 	FHitResult RightHandClimbResult;
 	FRotator WallRotation;
+	FRotator CornerHopRotation;
 	UParkourVariables* ParkourVariables;
 	FTimerHandle TimerHandle_DelayedFunction;
 	FTimerHandle TimerHandle_FinishCameraTimeline;
