@@ -34,6 +34,9 @@
 #include "ClimbHopLeftUpDT.h"
 #include "ClimbHopRightUpDT.h"
 #include "ClimbHopDownDT.h"
+#include "FreeClimbHopLeftDT.h"
+#include "FreeClimbHopRightDT.h"
+#include "FreeClimbHopDownDT.h"
 
 // Sets default values for this component's properties
 UParkourComponent::UParkourComponent()
@@ -769,15 +772,15 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopLeft"))
 	{
-		ParkourVariables = NewObject<UClimbHopUpDT>();
+		ParkourVariables = NewObject<UFreeClimbHopLeftDT>();
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopRight"))
 	{
-		ParkourVariables = NewObject<UClimbHopUpDT>();
+		ParkourVariables = NewObject<UFreeClimbHopRightDT>();
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopDown"))
 	{
-		ParkourVariables = NewObject<UClimbHopUpDT>();
+		ParkourVariables = NewObject<UFreeClimbHopDownDT>();
 	}
 	else
 	{
