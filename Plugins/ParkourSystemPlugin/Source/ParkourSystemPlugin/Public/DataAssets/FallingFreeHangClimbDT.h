@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "ParkourVariables.h"
-#include "FallingFreeHangClimb.generated.h"
+#include "FallingFreeHangClimbDT.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PARKOURSYSTEMPLUGIN_API UFallingFreeHangClimb : public UParkourVariables
+class PARKOURSYSTEMPLUGIN_API UFallingFreeHangClimbDT : public UParkourVariables
 {
 	GENERATED_BODY()
 	
 public:
-	UFallingFreeHangClimb();
+	UFallingFreeHangClimbDT();
 };

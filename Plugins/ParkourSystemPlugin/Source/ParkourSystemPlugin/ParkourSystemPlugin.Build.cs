@@ -1,3 +1,4 @@
+using System.IO;
 using UnrealBuildTool;
 
 public class ParkourSystemPlugin : ModuleRules
@@ -8,11 +9,25 @@ public class ParkourSystemPlugin : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
+                Path.Combine(ModuleDirectory, "Public"),
+                Path.Combine(ModuleDirectory, "Public/Actors"),
+                Path.Combine(ModuleDirectory, "Public/AnimationNotifies"),
+                Path.Combine(ModuleDirectory, "Public/Components"),
+                Path.Combine(ModuleDirectory, "Public/DataAssets"),
+                Path.Combine(ModuleDirectory, "Public/FunctionLibraries"),
+                Path.Combine(ModuleDirectory, "Public/Interfaces")
             }
         );
 
         PrivateIncludePaths.AddRange(
             new string[] {
+                Path.Combine(ModuleDirectory, "Private"),
+                Path.Combine(ModuleDirectory, "Private/Actors"),
+                Path.Combine(ModuleDirectory, "Private/AnimationNotifies"),
+                Path.Combine(ModuleDirectory, "Private/Components"),
+                Path.Combine(ModuleDirectory, "Private/DataAssets"),
+                Path.Combine(ModuleDirectory, "Private/FunctionLibraries"),
+                Path.Combine(ModuleDirectory, "Private/Interfaces")
             }
         );
 

@@ -25,7 +25,7 @@
 #include "BracedClimbUpDT.h"
 #include "FreeHangClimbUpDT.h"
 #include "FallingBracedClimbDT.h"
-#include "FallingFreeHangClimb.h"
+#include "FallingFreeHangClimbDT.h"
 #include "BracedDropDownDT.h"
 #include "FreeHangDropDownDT.h"
 #include "ClimbHopUpDT.h"
@@ -741,7 +741,7 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FallingFreeHang"))
 	{
-		ParkourVariables = NewObject<UFallingFreeHangClimb>();
+		ParkourVariables = NewObject<UFallingFreeHangClimbDT>();
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.DropDown"))
 	{

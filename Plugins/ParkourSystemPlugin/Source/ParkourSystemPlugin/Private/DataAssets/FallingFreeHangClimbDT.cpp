@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FallingFreeHangClimb.h"
+#include "FallingFreeHangClimbDT.h"
 
-UFallingFreeHangClimb::UFallingFreeHangClimb()
+UFallingFreeHangClimbDT::UFallingFreeHangClimbDT()
 {
 	FString path = "/ParkourSystemPlugin/Animations/ParkourAnimations/Montages/FallingFreeHangClimb_Montage";
 	ConstructorHelpers::FObjectFinder<UAnimMontage> MontageAsset(*path);
@@ -11,7 +11,7 @@ UFallingFreeHangClimb::UFallingFreeHangClimb()
 	if (MontageAsset.Succeeded())
 		ParkourMontage = MontageAsset.Object;
 	else
-		UE_LOG(LogTemp, Warning, TEXT("UBracedClimbUpDT: AnimMontage wasn't found"));
+		UE_LOG(LogTemp, Warning, TEXT("UFallingFreeHangClimbDT: AnimMontage wasn't found"));
 
 	ParkourInState = FGameplayTag::RequestGameplayTag("Parkour.State.ReachLedge");
 	ParkourOutState = FGameplayTag::RequestGameplayTag("Parkour.State.Climb");
