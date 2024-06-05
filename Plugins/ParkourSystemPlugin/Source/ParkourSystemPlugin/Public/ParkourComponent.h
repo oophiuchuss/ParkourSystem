@@ -37,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourMoveInputAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem")
+	bool bDrawDebug;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -47,15 +50,19 @@ public:
 
 	virtual bool SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera) override;
 
-	UFUNCTION()
+	UFUNCTION()	
 	void OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 
 	UFUNCTION()
 	void OnCornerMoveCompleted();
 
+	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
+	void ChangeDebugMode();
+
 	void LeftClimbIK();
 
 	void RightClimbIK();
+
 private:
 
 	////////////////////////////////////////////////////////////////////
@@ -100,16 +107,16 @@ private:
 	void CheckClimbStyle();
 
 	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime = 2.0f) const;
+		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime = 0.5f) const;
 
 	void PerformBoxTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime = 2.0f) const;
+		const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime = 0.5f) const;
 
 	void PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime = 2.0f) const;
+		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime = 0.5f) const;
 
 	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime = 1.0f) const;
+		ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime = 0.5f) const;
 
 	void ShowHitResults();
 
@@ -269,7 +276,6 @@ private:
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
 	bool bShowHitResult;
-	bool bDrawDebug;
 	bool bOnGround;
 	bool bFirstClimbMove;
 	bool bCanCornerHop;

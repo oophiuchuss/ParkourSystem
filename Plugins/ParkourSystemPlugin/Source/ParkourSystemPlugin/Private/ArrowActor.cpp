@@ -14,7 +14,7 @@ AArrowActor::AArrowActor()
 
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
 	ArrowComponent->SetupAttachment(RootComponent);
-	ArrowComponent->SetHiddenInGame(false);
+	ArrowComponent->SetHiddenInGame(true);
 }
 
 // Called when the game starts or when spawned

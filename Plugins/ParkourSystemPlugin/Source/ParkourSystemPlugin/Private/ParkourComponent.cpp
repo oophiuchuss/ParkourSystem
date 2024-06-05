@@ -51,6 +51,19 @@ UParkourComponent::UParkourComponent()
 		CameraCurve = MontageAsset.Object;
 	else
 		UE_LOG(LogTemp, Warning, TEXT("UParkourComponent: CameraCurve wasn't found"));
+
+	ParkourActionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction"));
+	ParkourStateTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.State.NotBusy"));
+	ClimbStyle = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.FreeHang"));
+	FGameplayTag NoDirectionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection"));
+	ClimbDirection = NoDirectionTag;
+	ClimbMoveCheckDistance = 10.0f;
+	ClimbHandSpace = 20.0f;
+	bCanAutoClimb = true;
+	bCanManualClimb = true;
+	bShowHitResult = true;
+	bDrawDebug = false;
+	bOnGround = true;
 }
 
 // Called when the game starts
@@ -82,18 +95,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	CameraBoom = NewCameraBoom;
 	MotionWarping = NewMotionWarping;
 	Camera = NewCamera;
-	ParkourActionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction"));
-	ParkourStateTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.State.NotBusy"));
-	ClimbStyle = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.FreeHang"));
-	FGameplayTag NoDirectionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection"));
-	ClimbDirection = NoDirectionTag;
-	ClimbMoveCheckDistance = 10.0f;
-	ClimbHandSpace = 20.0f;
-	bCanAutoClimb = true;
-	bCanManualClimb = true;
-	bShowHitResult = true;
-	bDrawDebug = false;
-	bOnGround = true;
+	
 	if (Character)
 	{
 		WidgetActor = Character->GetWorld()->SpawnActor<AWidgetActor>(AWidgetActor::StaticClass(), Character->GetActorLocation(), FRotator::ZeroRotator);
@@ -155,8 +157,6 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 
 	if (AnimInstance)
 		AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UParkourComponent::OnParkourMontageBlendOut);
-
-
 
 	if (CameraBoom)
 	{
@@ -266,7 +266,7 @@ void UParkourComponent::ChekcWallShape()
 			EndLocation = Character->GetActorLocation() + FVector(0.0f, 0.0f, (i * 16.0f) + FirstTraceHeight()) +
 				(Character->GetActorForwardVector() * (j * 10.0f + 10.0f));
 
-			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug);
+			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug, 0.0f);
 
 			if (HitResult.bBlockingHit && !HitResult.bStartPenetrating)
 			{
@@ -501,6 +501,12 @@ void UParkourComponent::PerformLineTraceByChannel(UWorld* World, FHitResult& Hit
 		else
 			DrawDebugLine(World, StartLocation, EndLocation, FColor::Green, false, DrawTime);
 	}
+}
+
+void UParkourComponent::ChangeDebugMode()
+{
+	ArrowActor->GetArrowComponent()->SetHiddenInGame(bDrawDebug);
+	bDrawDebug = !bDrawDebug;
 }
 
 void UParkourComponent::ShowHitResults()
@@ -2049,7 +2055,7 @@ void UParkourComponent::ClimbMove()
 		EndLocation = StartLocation + ForwardVector * 60.0f;
 
 		OuterLoopHitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+		PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 0.0f);
 
 		if (OuterLoopHitResult.bStartPenetrating)
 			continue;
@@ -2082,7 +2088,7 @@ void UParkourComponent::ClimbMove()
 			EndLocation = StartLocation;
 			EndLocation.Z -= 55.0f;
 
-			PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug);
+			PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.0f);
 
 			if (InnerLoopHitResult.bStartPenetrating)
 			{
@@ -2125,7 +2131,7 @@ void UParkourComponent::ClimbMove()
 		StartLocation.Z += i * 5.0f + 2.0f;
 		EndLocation = StartLocation + RightVector * GetHorizontalAxis() * 15.0f;
 		FHitResult LineTraceHitResult;
-		PerformLineTraceByChannel(Character->GetWorld(), LineTraceHitResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
+		PerformLineTraceByChannel(Character->GetWorld(), LineTraceHitResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug, 0.0f);
 
 		if (!LineTraceHitResult.bBlockingHit)
 		{
@@ -2409,7 +2415,7 @@ bool UParkourComponent::CheckClimbMoveSurface(const FHitResult& MovementHitResul
 	FVector EndLocation = StartLocation + ForwardVector * 15.0f;
 
 	FHitResult HitResult;
-	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 82.0f, 5.0f, ECC_Visibility, bDrawDebug);
+	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 82.0f, 5.0f, ECC_Visibility, bDrawDebug, 0.0f);
 
 	return !HitResult.bBlockingHit;
 }
@@ -2626,7 +2632,7 @@ void UParkourComponent::SetClimbStyleOnMove(const FHitResult& HitResult, const F
 	FVector EndLocation = StartLocation + ForwardVector * 35.0f;
 
 	FHitResult TraceResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), TraceResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug);
+	PerformSphereTraceByChannel(Character->GetWorld(), TraceResult, StartLocation, EndLocation, 10.0f, ECC_Visibility, bDrawDebug, 0.0f);
 
 	if (TraceResult.bBlockingHit)
 		SetClimbStyle(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.Braced")));
