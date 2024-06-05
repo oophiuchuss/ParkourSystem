@@ -11,15 +11,30 @@ public class ParkourSystem : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[] { 
             //Default
             "Core",
-            "CoreUObject",
-            "Engine",
-            "InputCore",
-            "EnhancedInput",
-
-            //For plugin
-            "GameplayTags",
-            "MotionWarping",
-            "UMG"
+                "CoreUObject",
+                "Engine",
+                "InputCore",
+                "EnhancedInput",
+                "GameplayTags",
+                "MotionWarping",
+                "UMG",
+                "ParkourSystemPlugin"
         });
+
+        PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                    "Projects",
+                    "InputCore",
+                    "EditorFramework",
+                    "UnrealEd",
+                    "ToolMenus",
+                    "CoreUObject",
+                    "Engine",
+                    "Slate",
+                    "SlateCore",
+                // ... add private dependencies that you statically link with here ...	
+            }
+         );
     }
 }
