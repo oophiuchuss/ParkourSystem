@@ -95,7 +95,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	CameraBoom = NewCameraBoom;
 	MotionWarping = NewMotionWarping;
 	Camera = NewCamera;
-	
+
 	if (Character)
 	{
 		WidgetActor = Character->GetWorld()->SpawnActor<AWidgetActor>(AWidgetActor::StaticClass(), Character->GetActorLocation(), FRotator::ZeroRotator);
@@ -185,7 +185,10 @@ void UParkourComponent::ParkourActionFunction(bool bAutoClimb)
 		return;
 
 	ChekcWallShape();
-	ShowHitResults();
+
+	if(bDrawDebug)
+		ShowHitResults();
+	
 	CheckDistance();
 	ParkourType(bAutoClimb);
 }
@@ -511,22 +514,21 @@ void UParkourComponent::ChangeDebugMode()
 
 void UParkourComponent::ShowHitResults()
 {
-	if (bShowHitResult)
-	{
-		if (WallTopResult.bBlockingHit)
-			DrawDebugSphere(Character->GetWorld(), WallTopResult.ImpactPoint, 5.0f,
-				12, FColor::Blue, false, 1.0f);
-		if (WallDepthResult.bBlockingHit && !WallDepthResult.bStartPenetrating)
-			DrawDebugSphere(Character->GetWorld(), WallDepthResult.ImpactPoint, 5.0f,
-				12, FColor::Cyan, false, 1.0f);
-		if (WallVaultResult.bBlockingHit && !WallVaultResult.bStartPenetrating)
-			DrawDebugSphere(Character->GetWorld(), WallVaultResult.ImpactPoint, 5.0f,
-				12, FColor::Magenta, false, 1.0f);
+	//TODO is bShowResult needed?
 
-		if (SecondClimbLedgeResult.bBlockingHit)
-			DrawDebugSphere(Character->GetWorld(), SecondClimbLedgeResult.ImpactPoint, 5.0f,
-				12, FColor::Black, false, 1.0f);
-	}
+	if (WallTopResult.bBlockingHit)
+		DrawDebugSphere(Character->GetWorld(), WallTopResult.ImpactPoint, 5.0f,
+			12, FColor::Blue, false, 1.0f);
+	if (WallDepthResult.bBlockingHit && !WallDepthResult.bStartPenetrating)
+		DrawDebugSphere(Character->GetWorld(), WallDepthResult.ImpactPoint, 5.0f,
+			12, FColor::Cyan, false, 1.0f);
+	if (WallVaultResult.bBlockingHit && !WallVaultResult.bStartPenetrating)
+		DrawDebugSphere(Character->GetWorld(), WallVaultResult.ImpactPoint, 5.0f,
+			12, FColor::Magenta, false, 1.0f);
+
+	if (SecondClimbLedgeResult.bBlockingHit)
+		DrawDebugSphere(Character->GetWorld(), SecondClimbLedgeResult.ImpactPoint, 5.0f,
+			12, FColor::Black, false, 1.0f);
 }
 
 void UParkourComponent::CheckDistance()
@@ -1439,19 +1441,19 @@ void UParkourComponent::PlayParkourMontage()
 {
 	SetParkourState(ParkourVariables->ParkourInState);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour1",
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("FirstTopResultOffset",
 		FindWarpLocation(WallTopResult.ImpactPoint, ParkourVariables->Warp1XOffset, ParkourVariables->Warp1ZOffset), WallRotation);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour2",
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("DepthResultOffset",
 		FindWarpLocation(WallDepthResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour3",
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("VaultResultOffset",
 		FindWarpLocation(WallVaultResult.ImpactPoint, ParkourVariables->Warp3XOffset, ParkourVariables->Warp3ZOffset), WallRotation);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour4",
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("CheckedTopResultOffset",
 		FindWarpLocationChecked(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
 
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("Parkour5",
+	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation("SecondTopResultOffset",
 		FindWarpLocation(WallTopResult.ImpactPoint, ParkourVariables->Warp2XOffset, ParkourVariables->Warp2ZOffset), WallRotation);
 
 
