@@ -54,9 +54,9 @@ AParkourSystemCharacter::AParkourSystemCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
-	ParkourComponent = CreateDefaultSubobject<UParkourComponent>(TEXT("ParkourComponent"));
-
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
+
+	ParkourComponent = CreateDefaultSubobject<UParkourComponent>(TEXT("Component"));
 }
 
 void AParkourSystemCharacter::BeginPlay()
