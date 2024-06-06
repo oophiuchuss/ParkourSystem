@@ -3,6 +3,7 @@
 
 #include "ReachLedgeIK.h"
 #include "ParkourComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 void UReachLedgeIK::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {

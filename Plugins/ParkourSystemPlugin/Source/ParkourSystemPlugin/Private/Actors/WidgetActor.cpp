@@ -2,6 +2,7 @@
 
 
 #include "WidgetActor.h"
+#include "UObject/ConstructorHelpers.h" 
 
 // Sets default values
 AWidgetActor::AWidgetActor()

@@ -10,6 +10,12 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "GameplayTagsManager.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Curves/CurveFloat.h"
+#include "Animation/AnimInstance.h"
+#include "DrawDebugHelpers.h"
+#include "Animation/AnimTypes.h"
 
 #include "ParkourFunctionLibrary.h"
 #include "ParkourABPInterface.h"
