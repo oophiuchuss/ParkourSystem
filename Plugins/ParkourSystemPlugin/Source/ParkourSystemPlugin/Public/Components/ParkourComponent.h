@@ -83,6 +83,8 @@ private:
 
 	void ClimbMove();
 
+	void HopAction();
+
 	void CornerMove(const FVector& TargerRelativeLocation, const FRotator& TargerRelativeRotation);
 
 	void OutCornerMove(const int32& OutCornerIndex);
@@ -92,6 +94,8 @@ private:
 	void StopClimbMovement();
 
 	void ResetMovement();
+
+
 	////////////////////////////////////////////////////////////////////
 
 	//SURFACE CHECK
@@ -105,6 +109,30 @@ private:
 	bool CheckClimbSurface();
 
 	void CheckClimbStyle();
+
+	float FirstTraceHeight() const;
+
+	void CheckClimbOrHop();
+
+	bool CheckAirHang() const;
+
+	void CheckDistance();
+
+	bool CheckClimbMoveSurface(const FHitResult& MovementHitResult) const;
+
+	bool CheckOutCorner(int32& OutCornerIndex) const;
+
+	bool CheckInCorner();
+
+	bool CheckCornerHop();
+
+	bool CheckLedgeValid();
+
+	bool OutCornerHop();
+
+	////////////////////////////////////////////////////////////////////
+
+	//TRACING BY CHANNEL
 
 	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
 		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime = 0.5f) const;
@@ -120,29 +148,13 @@ private:
 
 	void ShowHitResults();
 
-	void CheckDistance();
-
 	void ResetParkourResults();
 
-	float FirstTraceHeight() const;
 
-	void CheckClimbOrHop();
+	////////////////////////////////////////////////////////////////////
 
-	bool CheckAirHang() const;
+	//CALCULATIONS
 
-	bool CheckClimbMoveSurface(const FHitResult& MovementHitResult) const;
-
-	bool CheckOutCorner(int32& OutCornerIndex) const;
-
-	bool CheckInCorner();
-
-	bool CheckCornerHop();
-	
-	bool OutCornerHop();
-
-	bool CheckLedgeValid();
-
-	//TODO maybe in other category
 	FRotator GetDesireRotation() const;
 
 	void FindDropDownHangLocation();
@@ -165,13 +177,9 @@ private:
 
 	float GetClimbRightHandZOffset() const;
 
-	FGameplayTag SelectHopAction();
-
-	FGameplayTag GetHopDirection() const;
-
 	////////////////////////////////////////////////////////////////////
 
-	//SET UP STATES AND ACTIONS
+	//GAMEPLAY PARKOUR TAGS 
 
 	void ParkourType(bool bAutoClimb);
 
@@ -187,10 +195,14 @@ private:
 
 	void SetClimbStyleOnMove(const FHitResult& HitResult, const FRotator& Rotation);
 
+	FGameplayTag SelectHopAction();
+
+	FGameplayTag GetHopDirection() const;
 
 	////////////////////////////////////////////////////////////////////
 
 	//DYNAMIC CAMERA
+
 	void PreviousStateSettings(const FGameplayTag& PreviousState, const FGameplayTag& NewState);
 
 	void AddCameraTimeline(float Time);
@@ -199,10 +211,10 @@ private:
 
 	void FinishTimeline();
 
-
 	////////////////////////////////////////////////////////////////////
 
 	//INVERSE KINEMATICS
+
 	void FirstClimbLedgeResultCalculation();
 	
 	void SecondClimbLedgeResultCalculation();
@@ -245,6 +257,7 @@ private:
 	////////////////////////////////////////////////////////////////////
 
 	//VARIABLES
+
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;
 	USkeletalMeshComponent* CharacterMesh;
@@ -266,8 +279,6 @@ private:
 	float RightScale;
 	FVector FirstTargetRelativeLocation;
 	FVector TargetRelativeCameraLocation;
-	FVector LastClimbRightHandLocation;
-	FVector LastClimbLeftHandLocation;
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
@@ -275,7 +286,6 @@ private:
 	FGameplayTag BlendOutState;
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
-	bool bShowHitResult;
 	bool bOnGround;
 	bool bFirstClimbMove;
 	bool bCanCornerHop;

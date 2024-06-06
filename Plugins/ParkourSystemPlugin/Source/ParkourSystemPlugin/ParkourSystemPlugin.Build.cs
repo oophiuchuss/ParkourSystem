@@ -47,17 +47,24 @@ public class ParkourSystemPlugin : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                    "Projects",
-                    "InputCore",
+                "Projects",
+                "InputCore",
+                "CoreUObject",
+                "Engine",
+                "Slate",
+                "SlateCore",
+            }
+         );
+
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.AddRange(
+                new string[] {
                     "EditorFramework",
                     "UnrealEd",
                     "ToolMenus",
-                    "CoreUObject",
-                    "Engine",
-                    "Slate",
-                    "SlateCore",
-                // ... add private dependencies that you statically link with here ...	
-            }
-         );
+                }
+            );
+        }
     }
 }
