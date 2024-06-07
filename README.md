@@ -19,6 +19,10 @@ Camera-Relative Input Calculation: Intuitive control based on camera direction.
 
 Debuggable Shape Traces: Facilitates smoother development.
 
+## Showcase
+
+[![Watch the video](https://img.youtube.com/vi/qH2z-RqcE3Q/maxresdefault.jpg)](https://youtu.be/qH2z-RqcE3Q)
+
 ## Installation
 Download packaged .zip plugin.
 
