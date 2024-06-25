@@ -18,7 +18,7 @@ class UParkourInterface : public UInterface
 };
 
 /**
- * 
+ * Interface for initializing parkour-related components and references.
  */
 class PARKOURSYSTEMPLUGIN_API IParkourInterface
 {
@@ -27,6 +27,7 @@ class PARKOURSYSTEMPLUGIN_API IParkourInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
+	// Initializes references for parkour-related components.
 	virtual bool SetInitializeReference(ACharacter* Character, USpringArmComponent* CameraBoom, UMotionWarpingComponent* MotionWarping, UCameraComponent* Camera) = 0;
 
 };

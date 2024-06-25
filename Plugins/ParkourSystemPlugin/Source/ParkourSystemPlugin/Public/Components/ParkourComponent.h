@@ -16,6 +16,9 @@
 
 struct FInputActionValue;
 
+/**
+ * Component for handling parkour-related actions, animations, and state management.
+ */
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PARKOURSYSTEMPLUGIN_API UParkourComponent : public UActorComponent, public IParkourInterface
 {
@@ -25,18 +28,23 @@ public:
 	// Sets default values for this component's properties
 	UParkourComponent();
 
+	// Input mapping context for parkour actions.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* ParkourMappingContext;
 
+	// Input action for initiating parkour actions.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourInputAction;
 
+	// Input action for performing parkour drop down.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourDropInputAction;
 
+	// Input action for parkour movement.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* ParkourMoveInputAction;
 
+	// Flag to enable or disable debug drawing.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem")
 	bool bDrawDebug;
 
@@ -48,215 +56,314 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	// Initializes references for character, camera, and motion warping components.
 	virtual bool SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera) override;
 
-	UFUNCTION()	
+	// Handler for parkour montage blend-out event.
+	UFUNCTION()
 	void OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 
+	// Handler for completing corner movement.
 	UFUNCTION()
 	void OnCornerMoveCompleted();
 
+	// Toggles the debug mode for parkour.
 	UFUNCTION(BlueprintCallable, Category = "ParkourSystem")
 	void ChangeDebugMode();
 
+	// Calculates IK for the left hand and foot.
 	void LeftClimbIK();
 
+	// Calculates IK for the right hand and foot.
 	void RightClimbIK();
 
 private:
 
 	////////////////////////////////////////////////////////////////////
-
-	//PARKOUR ACTION
-
-	void ParkourAction();
-
-	void ParkourActionFunction(bool bAutoClimb);
-
-	void AutoClimb();
-
-	void ParkourDrop();
-
-	void SetCanManualClimb();
-
-	void Move(const FInputActionValue& Value);
-
-	void ClimbMove();
-
-	void HopAction();
-
-	void CornerMove(const FVector& TargerRelativeLocation, const FRotator& TargerRelativeRotation);
-
-	void OutCornerMove(const int32& OutCornerIndex);
-
-	void CornerHop(bool bIsOutCorner);
-
-	void StopClimbMovement();
-
-	void ResetMovement();
-
-
+	//
+	//	PARKOUR ACTION HANDLING
+	//
 	////////////////////////////////////////////////////////////////////
 
-	//SURFACE CHECK
+	// Executes the parkour action.
+	void ParkourAction();
 
+	// Helper function for executing parkour action depending on auto-climb.
+	void ParkourActionFunction(bool bAutoClimb);
+
+	// Executes auto-climb with check whether character is on ground or not.
+	void AutoClimb();
+
+	// Performs parkour drop action.
+	void ParkourDrop();
+
+	// Enables manual climb mode. Used for delayed disabling.
+	void SetCanManualClimb();
+
+	// Handles parkour movement input.
+	void Move(const FInputActionValue& Value);
+
+	// Executes climb movement.
+	void ClimbMove();
+
+	// Executes hop action.
+	void HopAction();
+
+	// Handles movement around a corner with provided final location and rotation. 
+	void CornerMove(const FVector& TargerRelativeLocation, const FRotator& TargerRelativeRotation);
+
+	// Handles movement out of a corner with provided index of check iteration.
+	void OutCornerMove(const int32& OutCornerIndex);
+
+	// Handles hop action for corner transitions.
+	void CornerHop(bool bIsOutCorner);
+
+	// Stops climb movement.
+	void StopClimbMovement();
+
+	// Resets movement to default state.
+	void ResetMovement();
+
+	////////////////////////////////////////////////////////////////////
+	//
+	//	SURFACE CHECKS AND VALIDATION
+	//
+	////////////////////////////////////////////////////////////////////
+
+	// Checks the shape of the wall for climbing.
 	void ChekcWallShape();
 
+	// Checks if a surface is suitable for mantling.
 	bool CheckMantleSurface();
 
+	// Checks if a surface is suitable for vaulting.
 	bool CheckVaultSurface();
 
+	// Checks if a surface is suitable for climbing.
 	bool CheckClimbSurface();
 
+	// Determines the climb style based on the surface.
 	void CheckClimbStyle();
 
+	// Returns the height for the first trace.
 	float FirstTraceHeight() const;
 
+	// Determines if the action should be a climb or hop.
 	void CheckClimbOrHop();
 
+	// Checks if the character can hang in the air.
 	bool CheckAirHang() const;
 
+	// Validates the distance like WallHeight, WallDepth and VaultHeight.
 	void CheckDistance();
 
+	// Validates the surface for climb movement.
 	bool CheckClimbMoveSurface(const FHitResult& MovementHitResult) const;
 
+	// Checks for valid out-corner conditions with provided index of check iteration.
 	bool CheckOutCorner(int32& OutCornerIndex) const;
 
+	// Checks for valid in-corner conditions.
 	bool CheckInCorner();
 
+	// Validates if a corner hop can be performed.
 	bool CheckCornerHop();
 
+	// Validates if a ledge is valid for hop actions.
 	bool CheckLedgeValid();
 
+	// Performs hop action out of a corner.
 	bool OutCornerHop();
 
 	////////////////////////////////////////////////////////////////////
+	//
+	//	TRACING OPERATIONS
+	//
+	////////////////////////////////////////////////////////////////////
 
-	//TRACING BY CHANNEL
-
+	// Performs a sphere trace by channel.
 	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
 		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime = 0.5f) const;
 
+	// Performs a box trace by channel.
 	void PerformBoxTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		const FVector& BoxHalfExtend, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime = 0.5f) const;
+		const FVector& BoxHalfExtent, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime = 0.5f) const;
 
+	// Performs a capsule trace by channel.
 	void PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
 		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime = 0.5f) const;
 
+	// Performs a line trace by channel.
 	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
 		ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime = 0.5f) const;
 
+	// Displays hit results for debugging.
 	void ShowHitResults();
 
+	// Resets the results of parkour traces.
 	void ResetParkourResults();
 
-
+	////////////////////////////////////////////////////////////////////
+	//
+	//	CALCULATIONS
+	//
 	////////////////////////////////////////////////////////////////////
 
-	//CALCULATIONS
+	// Returns the desired rotation based on control rotation and movement direction.
+	FRotator GetDesiredRotation() const;
 
-	FRotator GetDesireRotation() const;
-
+	// Finds the location for a dropdown hang.
 	void FindDropDownHangLocation();
 
+	// Finds the location for a hop action.
 	void FindHopLocation();
 
+	// Calculates forward values for climbing.
 	void GetClimbForwardValue(float ScaleValue, float& HorizontalForwardValue, float& VerticalForwardValue) const;
 
+	// Calculates right values for climbing.
 	void GetClimbRightValue(float ScaleValue, float& HorizontalRightValue, float& VerticalRightValue) const;
 
+	// Returns the vertical axis value for climbing.
 	float GetVerticalAxis() const;
 
+	// Returns the horizontal axis value for climbing.
 	float GetHorizontalAxis() const;
 
+	// Returns the desired rotation tag for climbing.
 	FGameplayTag GetClimbDesireRotation();
 
+	// Returns the speed for climbing movements.
 	float GetClimbMoveSpeed() const;
 
+	// Returns the Z offset for the left hand during climbing.
 	float GetClimbLeftHandZOffset() const;
 
+	// Returns the Z offset for the right hand during climbing.
 	float GetClimbRightHandZOffset() const;
 
 	////////////////////////////////////////////////////////////////////
+	//
+	//	GAMEPLAY TAG HANDLING
+	//
+	////////////////////////////////////////////////////////////////////
 
-	//GAMEPLAY PARKOUR TAGS 
-
+	// Determines the type of parkour action.
 	void ParkourType(bool bAutoClimb);
 
+	// Sets the current parkour action.
 	void SetParkourAction(const FGameplayTag& NewParkourAction);
 
+	// Sets the current parkour state.
 	void SetParkourState(const FGameplayTag& NewParkourState);
 
+	// Sets the current climb style.
 	void SetClimbStyle(const FGameplayTag& NewClimbStyle);
 
+	// Sets the current climb direction.
 	void SetClimbDirection(const FGameplayTag& NewClimbDirection);
 
+	// Configures parkour settings.
 	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
 
+	// Sets the climb style while moving.
 	void SetClimbStyleOnMove(const FHitResult& HitResult, const FRotator& Rotation);
 
+	// Selects the appropriate hop action based on tags.
 	FGameplayTag SelectHopAction();
 
+	// Returns the direction for hop actions.
 	FGameplayTag GetHopDirection() const;
 
 	////////////////////////////////////////////////////////////////////
+	//
+	//	DYNAMIC CAMERA HANDLING
+	//
+	////////////////////////////////////////////////////////////////////
 
-	//DYNAMIC CAMERA
-
+	// Configures settings for transitioning between states.
 	void PreviousStateSettings(const FGameplayTag& PreviousState, const FGameplayTag& NewState);
 
+	// Adds a camera timeline for smooth transitions.
 	void AddCameraTimeline(float Time);
 
+	// Updates the camera timeline during transitions.
 	void CameraTimelineTick();
 
+	// Finalizes the camera timeline.
 	void FinishTimeline();
 
 	////////////////////////////////////////////////////////////////////
+	//
+	//	INVERSE KINEMATICS (IK)
+	//
+	////////////////////////////////////////////////////////////////////
 
-	//INVERSE KINEMATICS
-
+	// Calculates results for the first climb ledge.
 	void FirstClimbLedgeResultCalculation();
-	
+
+	// Calculates results for the second climb ledge.
 	void SecondClimbLedgeResultCalculation();
 
+	// Calculates IK for the left hand on the ledge.
 	void LeftHandLedgeIK(FHitResult& LedgeResult);
 
+	// Calculates IK for the left foot.
 	void LeftFootIK(FHitResult& LedgeResult);
 
+	// Calculates IK for the right hand on the ledge.
 	void RightHandLedgeIK(FHitResult& LedgeResult);
 
+	// Calculates IK for the right foot.
 	void RightFootIK(FHitResult& LedgeResult);
 
+	// Calculates IK for climbing movement.
 	void ClimbMoveIK();
 
+	// Calculates IK for the hands during climbing movement.
 	void ClimbMoveHandIK();
 
+	// Calculates IK for the left hand during climbing movement.
 	void ClimbMoveLeftHandIK();
 
+	// Calculates IK for the right hand during climbing movement.
 	void ClimbMoveRightHandIK();
 
+	// Calculates IK for the feet during climbing movement.
 	void ClimbMoveFootIK();
 
+	// Calculates IK for the left foot during climbing movement.
 	void ClimbMoveLeftFootIK();
 
+	// Calculates IK for the right foot during climbing movement.
 	void ClimbMoveRightFootIK();
 
+	// Resets IK for the feet.
 	void ResetFootIK(bool bIsLeft);
 
 	////////////////////////////////////////////////////////////////////
+	//
+	//	MONTAGE HANDLING
+	//
+	////////////////////////////////////////////////////////////////////
 
-	//MONTAGES
+	// Plays the montage for parkour actions.
 	void PlayParkourMontage();
 
+	// Finds the location for warping based on impact points.
 	FVector FindWarpLocation(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
 
+	// Checks and finds the warp location based on impact points.
 	FVector FindWarpLocationChecked(const FVector& ImpactPoint, float XOffset, float ZOffset) const;
 
+	// Finds the start time for the montage.
 	void FindMontageStartTime();
 
 	////////////////////////////////////////////////////////////////////
-
-	//VARIABLES
+	//
+	//	VARIABLES AND REFERENCES
+	//
+	////////////////////////////////////////////////////////////////////
 
 	ACharacter* Character;
 	UCharacterMovementComponent* CharacterMovement;

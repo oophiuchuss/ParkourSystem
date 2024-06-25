@@ -21,6 +21,7 @@
 #include "ParkourABPInterface.h"
 #include "ParkourStatsInterface.h"
 
+// Data assets for animation adjustments
 #include "ThinVaultDT.h"
 #include "VaultDT.h"
 #include "HighVaultDT.h"
@@ -1355,7 +1356,7 @@ void UParkourComponent::ShowHitResults()
 			12, FColor::Black, false, 1.0f);
 }
 
-FRotator UParkourComponent::GetDesireRotation() const
+FRotator UParkourComponent::GetDesiredRotation() const
 {
 	FRotator ControlRot = Character->GetControlRotation();
 	ControlRot.Roll = 0.0f;
@@ -1391,7 +1392,7 @@ void UParkourComponent::FindDropDownHangLocation()
 	if (!HitResult.bBlockingHit || HitResult.bStartPenetrating)
 		return;
 
-	FQuat QuatRotation = FQuat(GetDesireRotation());
+	FQuat QuatRotation = FQuat(GetDesiredRotation());
 	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
 	StartLocation = HitResult.ImpactPoint + ForwardVector * 100.0f;

@@ -7,7 +7,7 @@
 #include "VaultDT.generated.h"
 
 /**
- * 
+ * Data table containing variables for standard vault action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UVaultDT : public UParkourVariables

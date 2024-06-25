@@ -7,7 +7,7 @@
 #include "FreeHangDT.generated.h"
 
 /**
- *
+ * Data table containing variables for free hang climb action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UFreeHangDT : public UParkourVariables

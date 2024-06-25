@@ -5,9 +5,11 @@
 
 FRotator UParkourFunctionLibrary::NormalReverseRotationZ(FVector Normal)
 {
+	//Transform normal vector into a rotator
 	FRotator RelativeRotation = Normal.Rotation();
 	FRotator TargetRotation = FRotationMatrix::MakeFromX(RelativeRotation.Vector()).Rotator();
 
+	//Reverse the rotator
 	TargetRotation.Pitch = .0f;
 	TargetRotation.Roll = .0f;
 	TargetRotation.Yaw -= 180.f;
@@ -24,6 +26,7 @@ void UParkourFunctionLibrary::ReverseRotation(FRotator& Rotator)
 
 float UParkourFunctionLibrary::SelectClimbStyleFloat(float Braced, float FreeHang, const FGameplayTag& ClimbStyle)
 {
+	//Select float by climb style tag
 	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
 	{
 		return Braced;
@@ -39,6 +42,7 @@ float UParkourFunctionLibrary::SelectClimbStyleFloat(float Braced, float FreeHan
 float UParkourFunctionLibrary::SelectDirectionFloat(float Forward, float Backward, float Left, float Right,
 	float ForwardLeft, float BackwardLeft, float ForwardRight, float BackwardRight, const FGameplayTag& Direction)
 {
+	//Select float by direction tag
 	if (Direction.GetTagName().IsEqual("Parkour.Direction.Forward"))
 	{
 		return Forward;
@@ -77,6 +81,8 @@ float UParkourFunctionLibrary::SelectDirectionFloat(float Forward, float Backwar
 
 float UParkourFunctionLibrary::SelectParkourStateFloat(float NotBusy, float Vault, float Mantle, float Climb, const FGameplayTag& ParkourState)
 {
+
+	//Select float by state tag
 	if (ParkourState.GetTagName().IsEqual("Parkour.State.NotBusy"))
 	{
 		return NotBusy;
@@ -100,6 +106,7 @@ const FGameplayTag& UParkourFunctionLibrary::SelectDirectionHopAction(const FGam
 	const FGameplayTag& Right, const FGameplayTag& ForwardLeft, const FGameplayTag& BackwardLeft, const FGameplayTag& ForwardRight,
 	const FGameplayTag& BackwardRight, const FGameplayTag& Direction)
 {
+	//Select gameplay tag by direction tag
 	static FGameplayTag DefaultTag = FGameplayTag();
 	if (Direction.GetTagName().IsEqual("Parkour.Direction.Forward"))
 	{

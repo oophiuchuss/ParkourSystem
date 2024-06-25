@@ -7,7 +7,7 @@
 #include "BracedClimbUpDT.generated.h"
 
 /**
- * 
+ * Data table containing variables for braced climb up action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UBracedClimbUpDT : public UParkourVariables

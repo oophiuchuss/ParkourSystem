@@ -14,6 +14,7 @@ void UReachLedgeIK::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBas
 	if (!ParkourComponent)
 		return;
 
+	//Activate left or right IK
 	if (bIsLeft)
 		ParkourComponent->LeftClimbIK();
 	else

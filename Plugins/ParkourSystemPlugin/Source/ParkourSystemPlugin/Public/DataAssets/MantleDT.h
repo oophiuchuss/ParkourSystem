@@ -7,7 +7,7 @@
 #include "MantleDT.generated.h"
 
 /**
- * 
+ * Data table containing variables for standard mantle action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UMantleDT : public UParkourVariables

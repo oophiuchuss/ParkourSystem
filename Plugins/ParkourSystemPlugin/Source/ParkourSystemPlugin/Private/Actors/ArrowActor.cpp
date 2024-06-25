@@ -12,6 +12,7 @@ AArrowActor::AArrowActor()
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Component"));
 	RootComponent = SceneComponent;
 
+	//Create an arrow component itself
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
 	ArrowComponent->SetupAttachment(RootComponent);
 	ArrowComponent->SetHiddenInGame(true);

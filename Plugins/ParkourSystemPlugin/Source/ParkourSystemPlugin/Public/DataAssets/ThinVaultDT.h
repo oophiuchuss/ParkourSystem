@@ -7,7 +7,7 @@
 #include "ThinVaultDT.generated.h"
 
 /**
- * 
+ * Data table containing variables for thing vault action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UThinVaultDT : public UParkourVariables

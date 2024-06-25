@@ -7,8 +7,8 @@
 #include "FreeHangDropDownDT.generated.h"
 
 /**
- *
- */
+ * Data table containing variables for free hang drop down action, inheriting from UParkourVariables.
+ */ 
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UFreeHangDropDownDT : public UParkourVariables
 {

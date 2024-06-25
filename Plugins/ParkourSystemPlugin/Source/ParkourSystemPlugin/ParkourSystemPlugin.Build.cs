@@ -7,6 +7,7 @@ public class ParkourSystemPlugin : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
+        //Includes all public folders with all needed classes
         PublicIncludePaths.AddRange(
             new string[] {
                 Path.Combine(ModuleDirectory, "Public"),
@@ -19,6 +20,7 @@ public class ParkourSystemPlugin : ModuleRules
             }
         );
 
+        //Includes all private folders with all needed classes
         PrivateIncludePaths.AddRange(
             new string[] {
                 Path.Combine(ModuleDirectory, "Private"),
@@ -31,6 +33,7 @@ public class ParkourSystemPlugin : ModuleRules
             }
         );
 
+        //Includes all the necessary public modules for correct plugin work
         PublicDependencyModuleNames.AddRange(
             new string[] {
                 "Core",
@@ -44,6 +47,7 @@ public class ParkourSystemPlugin : ModuleRules
             }
         );
 
+        //Includes all the necessary private modules for correct plugin work
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
@@ -58,6 +62,7 @@ public class ParkourSystemPlugin : ModuleRules
 
         if (Target.bBuildEditor)
         {
+            //Includes all the necessary private modules for correct work in editor mode
             PrivateDependencyModuleNames.AddRange(
                 new string[] {
                     "EditorFramework",

@@ -7,7 +7,7 @@
 #include "LowMantleDT.generated.h"
 
 /**
- * 
+ * Data table containing variables for low mantle action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API ULowMantleDT : public UParkourVariables

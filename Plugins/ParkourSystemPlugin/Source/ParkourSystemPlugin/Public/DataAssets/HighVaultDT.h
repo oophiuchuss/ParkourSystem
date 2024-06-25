@@ -7,7 +7,7 @@
 #include "HighVaultDT.generated.h"
 
 /**
- * 
+ * Data table containing variables for hight vault action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UHighVaultDT : public UParkourVariables

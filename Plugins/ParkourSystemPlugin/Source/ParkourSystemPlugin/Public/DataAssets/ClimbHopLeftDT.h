@@ -7,7 +7,7 @@
 #include "ClimbHopLeftDT.generated.h"
 
 /**
- * 
+ * Data table containing variables for braced climb action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UClimbHopLeftDT : public UParkourVariables

@@ -7,7 +7,7 @@
 #include "BracedDropDownDT.generated.h"
 
 /**
- *
+ * Data table containing variables for braced drop down action, inheriting from UParkourVariables.
  */
 UCLASS()
 class PARKOURSYSTEMPLUGIN_API UBracedDropDownDT : public UParkourVariables
