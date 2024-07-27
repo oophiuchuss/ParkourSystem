@@ -50,6 +50,8 @@ UParkourComponent::UParkourComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+	
+	// Serach for Camera curve and set reference
 	FString path = "/ParkourSystemPlugin/Curves/FC_ParkourCameraMove";
 	ConstructorHelpers::FObjectFinder<UCurveFloat> MontageAsset(*path);
 
@@ -58,11 +60,14 @@ UParkourComponent::UParkourComponent()
 	else
 		UE_LOG(LogTemp, Warning, TEXT("UParkourComponent: CameraCurve wasn't found"));
 
+	// Set up all default tags
 	ParkourActionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction"));
 	ParkourStateTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.State.NotBusy"));
 	ClimbStyle = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.ClimbStyle.FreeHang"));
 	FGameplayTag NoDirectionTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection"));
 	ClimbDirection = NoDirectionTag;
+
+	// Set up all default variables
 	ClimbMoveCheckDistance = 10.0f;
 	ClimbHandSpace = 20.0f;
 	bCanAutoClimb = true;
@@ -83,13 +88,16 @@ void UParkourComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	// Check whether auto-climb should be enable
 	AutoClimb();
 
+	// Automatically activate IK when moving while climbing 
 	ClimbMoveIK();
 }
 
 bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera)
 {
+	// Initialize all character related references
 	Character = NewCharacter;
 	CharacterMovement = Character->GetCharacterMovement();
 	CharacterMesh = Character->GetMesh();
@@ -101,6 +109,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 
 	if (Character)
 	{
+		// Create widget actor and attach it to the character
 		WidgetActor = Character->GetWorld()->SpawnActor<AWidgetActor>(AWidgetActor::StaticClass(), Character->GetActorLocation(), FRotator::ZeroRotator);
 		if (WidgetActor)
 		{
@@ -116,6 +125,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 		else
 			return false;
 
+		// Create arrow actor and attach it to the character
 		ArrowActor = Character->GetWorld()->SpawnActor<AArrowActor>(AArrowActor::StaticClass(), Character->GetActorLocation(), FRotator::ZeroRotator);
 		if (ArrowActor)
 		{
@@ -137,7 +147,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 			return false;
 
 
-
+		// Set up all input actions within input mapping context
 		if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
 		{
 			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -158,9 +168,11 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 	else
 		return false;
 
+	// Bind OnParkourMontageBlendOut method to the character animation instance
 	if (AnimInstance)
 		AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UParkourComponent::OnParkourMontageBlendOut);
 
+	// Initialize camera boom and related fields
 	if (CameraBoom)
 	{
 		FirstCameraTargetArmLenght = CameraBoom->TargetArmLength;
@@ -174,30 +186,37 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 
 void UParkourComponent::ParkourAction()
 {
+	// Call parkour action function with auto-climb diactivated (is used to invoke via manual input action)
 	ParkourActionFunction(false);
 }
 
 void UParkourComponent::ParkourActionFunction(bool bAutoClimb)
 {
+	// Check is character currently doing anything
 	if (!ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
 		return;
 
+	// Check is character able to auto-climb or manual climb
 	bool bCheckClimb = bAutoClimb ? bCanAutoClimb : bCanManualClimb;
 
 	if (!bCheckClimb)
 		return;
 
+	// Check wall shape for climbing 
 	ChekcWallShape();
 
+	// Show hit results for debug purposes
 	if(bDrawDebug)
 		ShowHitResults();
 	
+	// Check and correct distances and invoke the parkour action itself
 	CheckDistance();
 	ParkourType(bAutoClimb);
 }
 
 void UParkourComponent::AutoClimb()
 {
+	// Trace box to check whether character is on ground 
 	FVector Location = CharacterMesh->GetSocketLocation("root");
 
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
@@ -207,6 +226,9 @@ void UParkourComponent::AutoClimb()
 	PerformBoxTraceByChannel(Character->GetWorld(), HitResult, Location, Location, FVector(10.0f, 10.0f, 4.0f), ECC_Visibility, bDrawDebug, 0.0f);
 	bOnGround = (HitResult.bBlockingHit || HitResult.bStartPenetrating);
 
+	// Determine character`s ability to manually climb and auto-climb 
+	// If cahracter is on ground, then both types of climbing are available and parkour results are reseted
+	// If not, parkour action function invoked with auto-climb parameter as true
 	if (bOnGround)
 	{
 		if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
@@ -223,10 +245,13 @@ void UParkourComponent::AutoClimb()
 
 void UParkourComponent::ParkourDrop()
 {
+	// If character is not on ground and is climbing, firstly stop climbing and then allow manual climb with a delay
+	// If character is, then parkour drop down action is used (firstly find a drop down location)
 	if (!bOnGround)
 	{
 		if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 		{
+			// Set state to NotBusy, which stops climbing
 			SetParkourState(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.State.NotBusy")));
 			bCanManualClimb = false;
 			bCanAutoClimb = false;
@@ -239,6 +264,7 @@ void UParkourComponent::ParkourDrop()
 	}
 	else
 	{
+		// Check whether character is doing anything
 		if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
 		{
 			FindDropDownHangLocation();
@@ -255,18 +281,23 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
+	// Check is character controller valid
 	if (Character->GetController() == nullptr)
 		return;
 
+	// Check is character currently reaching ledge
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.ReachLedge"))
 		bFirstClimbMove = false;
 
 	ForwardScale = MovementVector.Y;
 	RightScale = MovementVector.X;
 
+	// Calculate forward and right value using sin and cos (value is between -1 and 1)
 	GetClimbForwardValue(ForwardScale, HorizontalClimbForwardValue, VerticalClimbForwardValue);
 	GetClimbRightValue(RightScale, HorizontalClimbRightValue, VerticalClimbRightValue);
 
+	// If character doesn't any action, then add movement input
+	// If does and it is climbing, then invoke climb move function
 	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.NotBusy"))
 	{
 		const FRotator Rotation = Character->GetController()->GetControlRotation();
@@ -281,6 +312,7 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 	{
+		// Check whether character is playing any montages
 		if (AnimInstance->IsAnyMontagePlaying())
 			StopClimbMovement();
 		else
@@ -290,17 +322,19 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 
 void UParkourComponent::ClimbMove()
 {
+	// Check is character perfoming corner move
 	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.CornerMove"))
 		return;
 
+	// Check is Horizontal axis value big enought to move (determined by camera angle and input movement)
 	if (FMath::Abs(GetHorizontalAxis()) <= 0.7f)
 	{
 		StopClimbMovement();
 		return;
 	}
 
+	// Determine and set whther it is right or left movement
 	FName NewDirectionString = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
-
 	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName(NewDirectionString)));
 
 	bool bShouldBreak = false;
@@ -310,8 +344,12 @@ void UParkourComponent::ClimbMove()
 	FVector EndLocation;
 	FQuat QuatRotation;
 
+	// Outer loop that checks wall in front of the character
 	for (int32 i = 0; i < 3; i++)
 	{
+		// Trace sphere to check whether there is a wall in front of character from arrow perspective
+		// Start gets lower after each iteration
+
 		QuatRotation = FQuat(ArrowActor->GetArrowComponent()->GetComponentRotation());
 		FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
 		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
@@ -323,9 +361,11 @@ void UParkourComponent::ClimbMove()
 		OuterLoopHitResult;
 		PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 0.0f);
 
+		// If hit result is penetrating at start, then skip to next iteration
 		if (OuterLoopHitResult.bStartPenetrating)
 			continue;
 
+		// Initialize index to use in check function for out corner and after that pass it to move function itslef
 		int32 OutCornerIndex;
 		if (CheckOutCorner(OutCornerIndex))
 		{
@@ -333,18 +373,22 @@ void UParkourComponent::ClimbMove()
 			break;
 		}
 
+		//  If hit result is not blocked by anything and it is not last iteration, then skip to next iteration
 		if (!OuterLoopHitResult.bBlockingHit)
 		{
-			// iterates till i is not the last one
 			if (i != 2)
 				continue;
 
+			// Check for in corner move if it is the last iteration
 			CheckInCorner();
 			break;
 		}
 
+		// Inner loop that checks top of the wall
 		for (int32 j = 0; j < 7; j++)
 		{
+			// Trace sphere to check whether there is the top of the edge
+			// Start gets higher after each iteration
 			QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
 			ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 
@@ -356,8 +400,10 @@ void UParkourComponent::ClimbMove()
 
 			PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.0f);
 
+			// If hit result is penetrating at start, then skip to next iteration
 			if (InnerLoopHitResult.bStartPenetrating)
 			{
+				// Check is it the last possible iteration
 				if (i == 2 && j == 6)
 				{
 					StopClimbMovement();
@@ -367,6 +413,7 @@ void UParkourComponent::ClimbMove()
 				continue;
 			}
 
+			// If hit result was blocked by something, break both inner and outer loops
 			if (InnerLoopHitResult.bBlockingHit)
 				bShouldBreak = true;
 			else
@@ -375,32 +422,34 @@ void UParkourComponent::ClimbMove()
 			break;
 		}
 
+		// Check whether outer loop should break
 		if (bShouldBreak)
 			break;
 	}
 
+	// If outer loop was ended naturally and not breaked, then end function
 	if (!bShouldBreak)
 		return;
 
+	// Loop that checks ...
 	for (int32 i = 0; i < 6; i++)
 	{
+		// Trace line to determine whether there is any blocking object on left/right side from top of the wall
+		// Start gets higher after each iteration
 		QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
 		FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
 
-		FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
-		float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(-44.0f, -7.0f, ClimbStyle);
-
-		ForwardVector* StyleMultiplier + OuterLoopHitResult.ImpactPoint;
-
-		StartLocation = InnerLoopHitResult.ImpactPoint;
-
 		StartLocation.Z += i * 5.0f + 2.0f;
 		EndLocation = StartLocation + RightVector * GetHorizontalAxis() * 15.0f;
+
 		FHitResult LineTraceHitResult;
 		PerformLineTraceByChannel(Character->GetWorld(), LineTraceHitResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug, 0.0f);
 
+		// If something is blocking hit result and it is the last iteration, then end function
+		// If not, then break the loop
 		if (!LineTraceHitResult.bBlockingHit)
 		{
+			// If climb surface is valid for moving, then set new wall rotation
 			if (CheckClimbMoveSurface(OuterLoopHitResult))
 				WallRotation = QuatRotation.Rotator();
 			else
@@ -418,28 +467,35 @@ void UParkourComponent::ClimbMove()
 		}
 	}
 
+	// Initialize needed variables for character's move
 	QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(OuterLoopHitResult.ImpactNormal));
 	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 	FVector NewCharacterLocation;
 	FRotator NewCharacterRotation;
 
+	// Calculate target base vector based on first wall point, its forward vector and style multiplier 
 	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(-44.0f, -7.0f, ClimbStyle);
 	FVector OuterLoopVector = OuterLoopHitResult.ImpactPoint + ForwardVector * StyleMultiplier;
 
+	// Claculate target Z vector based on wall top point, character height diff and style subtracted value
 	float StyleSub = UParkourFunctionLibrary::SelectClimbStyleFloat(107.0f, 115.0f, ClimbStyle);
 	float TargetInterpZ = InnerLoopHitResult.ImpactPoint.Z + CharacterHeightDiff - StyleSub;
 
+	// Interpolate character old position to new one with use of move speed
 	float DeltaSeconds = Character->GetWorld()->GetDeltaSeconds();
 	float StyleInterpSpeed = UParkourFunctionLibrary::SelectClimbStyleFloat(2.7f, 1.8f, ClimbStyle);
 	NewCharacterLocation.X = FMath::FInterpTo(Character->GetActorLocation().X, OuterLoopVector.X, DeltaSeconds, GetClimbMoveSpeed());
 	NewCharacterLocation.Y = FMath::FInterpTo(Character->GetActorLocation().Y, OuterLoopVector.Y, DeltaSeconds, GetClimbMoveSpeed());
 	NewCharacterLocation.Z = FMath::FInterpTo(Character->GetActorLocation().Z, TargetInterpZ, DeltaSeconds, StyleInterpSpeed);
 
+	// Interpolate character old rotation to new one 
 	NewCharacterRotation = FMath::RInterpTo(Character->GetActorRotation(), WallRotation, DeltaSeconds, 4.0f);
 	Character->SetActorLocationAndRotation(NewCharacterLocation, NewCharacterRotation);
 
+	// Call function to check and set needed climb style on move
 	SetClimbStyleOnMove(InnerLoopHitResult, WallRotation);
 
+	// Used for IK
 	bFirstClimbMove = true;
 }
 
@@ -457,27 +513,34 @@ void UParkourComponent::HopAction()
 
 void UParkourComponent::CornerMove(const FVector& TargerRelativeLocation, const FRotator& TargerRelativeRotation)
 {
+	// Used for IK
 	bFirstClimbMove = true;
 
+	// Set appropriate tag
 	SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.CornerMove")));
 
+	// Set and determine which direction is going to be corner Move
 	FName NewDirectionName = GetHorizontalAxis() > 0.0f ? "Parkour.Direction.Right" : "Parkour.Direction.Left";
 	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName(NewDirectionName)));
 
+	// Set time depending on climb style
 	float OverTimeByStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(0.5f, 0.9f, ClimbStyle);
 
+	// Initialize needed variables for Latent action info
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
 	LatentInfo.Linkage = 0;
 	LatentInfo.UUID = 1;
 	LatentInfo.ExecutionFunction = FName("OnCornerMoveCompleted");
 
+	// Call MoveComponentTo to change character's position
 	UKismetSystemLibrary::MoveComponentTo(CapsuleComponent, TargerRelativeLocation, TargerRelativeRotation, false, false,
 		OverTimeByStyle, true, EMoveComponentAction::Type::Move, LatentInfo);
 }
 
 void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 {
+	// Trace sphere to check whether there is a wall on right/left side 
 	FVector StartLocation;
 	FVector EndLocation;
 	FHitResult CheckHitResult;
@@ -489,13 +552,17 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 	StartLocation.Z -= OutCornerIndex * 10.0f;
 	EndLocation = StartLocation + RightVector * (GetHorizontalAxis() * 60.0f);
 
-	PerformSphereTraceByChannel(Character->GetWorld(), CheckHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 0.f);
+	PerformSphereTraceByChannel(Character->GetWorld(), CheckHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 1.f);
 
+	// If no wall was detected, then stop function
 	if (!CheckHitResult.bBlockingHit)
 		return;
 
+	// Loop to get top of the wall
 	for (int32 i = 0; i < 5; i++)
 	{
+		// Trace sphere to get top of the wall from front side of the wall
+		// Start gets higher after each iteration
 		StartLocation = CheckHitResult.ImpactPoint;
 		StartLocation.Z += 5.0f * (i + 1);
 
@@ -504,9 +571,11 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 
 		PerformSphereTraceByChannel(Character->GetWorld(), LoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.f);
 
+		// If hit result is not penetrated at start, then break the loop
 		if (!LoopHitResult.bStartPenetrating)
 			break;
 
+		// If hit result was always penetrated at start, then stop function
 		if (i == 4)
 		{
 			StopClimbMovement();
@@ -514,12 +583,14 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 		}
 	}
 
+	// If hit result is not blocked ny anything, then stop fucntion
 	if (!LoopHitResult.bBlockingHit)
 	{
 		StopClimbMovement();
 		return;
 	}
 
+	// Calculate TargetRelativeRotation and TargetRelativeRotation (the last one using StyleMultiplier)
 	FRotator TargetRelativeRotation = UParkourFunctionLibrary::NormalReverseRotationZ(CheckHitResult.ImpactNormal);
 	FQuat QuatRotation = FQuat(TargetRelativeRotation);
 	FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
@@ -528,22 +599,27 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 	FVector TargetRelativeLocation = CheckHitResult.ImpactPoint - ForwardVector * StyleMultiplier;
 	TargetRelativeLocation.Z = LoopHitResult.ImpactPoint.Z - 107.0f;
 
+	// Call CornerMove function with target location and rotation as parameters
 	CornerMove(TargetRelativeLocation, TargetRelativeRotation);
 }
 
 void UParkourComponent::CornerHop(bool bIsOutCorner)
 {
+	// Determine hop distance and side
 	float CornerHorizontalHopDistance = bIsOutCorner ? 50.0f : 20.0f;
 	CornerHorizontalHopDistance *= GetHorizontalAxis();
 
 	int32 FirstIndex = GetHorizontalAxis() < 0.0f ? 0 : 4;
 	int32 LastIndex = GetHorizontalAxis() < 0.0f ? 3 : 7;
 
+	// Clean up WallHitTraces from previous records
 	WallHitTraces.Empty();
 
-
+	// Outer loop that checks ...
 	for (int32 i = FirstIndex; i < LastIndex; i++)
 	{
+		// Trace line to check whether there is a wall on the needed side 
+		// Start moves to right/left after each iteration
 		FVector CharacterUpVector = Character->GetActorQuat().RotateVector(FVector::UpVector);
 		FVector CharacterRightVector = Character->GetActorQuat().RotateVector(FVector::RightVector);
 
@@ -562,33 +638,42 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 		FHitResult OuterLoopTraceResult;
 		PerformLineTraceByChannel(Character->GetWorld(), OuterLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
 
+		//  Clean up HopHitTraces from previous iteration
 		HopHitTraces.Empty();
 
 		StartLocation.Z -= 16.0f;
 		EndLocation.Z -= 16.0f;
 
+		// First inner loop to get hit traces that show wall shape
 		for (int32 k = 0; k <= 20; k++)
 		{
+			// Trace line to check wall shape
+			// Start gets higher after each iteration
 			StartLocation.Z += 8.0f;
 			EndLocation.Z += 8.0f;
 
 			FHitResult InnerLoopTraceResult;
 			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, bDrawDebug);
 
+			// If line trace is penetrating at start, then skip to next iteration
 			if (InnerLoopTraceResult.bStartPenetrating)
 				continue;
 
+			// Add hit result to array
 			HopHitTraces.Add(InnerLoopTraceResult);
 		}
 
+		// Second inner loop to determine nearest edge point
 		for (int32 j = 1; j < HopHitTraces.Num(); j++)
 		{
+			// Check whether distance between to hit points big enough to consider it
 			float Distance1 = HopHitTraces[j].bBlockingHit ? HopHitTraces[j].Distance : FVector::Distance(HopHitTraces[j].TraceStart, HopHitTraces[j].TraceEnd);
 			float Distance2 = HopHitTraces[j - 1].bBlockingHit ? HopHitTraces[j - 1].Distance : FVector::Distance(HopHitTraces[j - 1].TraceStart, HopHitTraces[j - 1].TraceEnd);
 
 			if (Distance1 - Distance2 <= 5.0f)
 				continue;
 
+			// Trace capsule to check whether character will fit and won't collide with anything
 			FQuat QuatRotation = FQuat(UParkourFunctionLibrary::NormalReverseRotationZ(HopHitTraces[j - 1].ImpactNormal));
 			FVector ForwardVector = QuatRotation.RotateVector(FVector::ForwardVector);
 			FVector RightVector = QuatRotation.RotateVector(FVector::RightVector);
@@ -603,7 +688,7 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 			FHitResult CapsuleCheckTrace;
 			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation, CapsuleHalfHeight, 25.0f, ECC_Visibility, bDrawDebug);
 
-
+			// If point passes the check (capsule trace is not blocked by anything), then add it to array
 			if (!CapsuleCheckTrace.bBlockingHit)
 				WallHitTraces.Add(HopHitTraces[j - 1]);
 
@@ -612,14 +697,14 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 		}
 	}
 
+	// Check is WallHitTraces is valid 
 	if (!CheckLedgeValid())
 		return;
 
-	if (WallHitTraces.Num() <= 0)
-		return;
-
+	// Take first result from array as a start
 	WallHitResult = WallHitTraces[0];
 
+	// Loop to determine nearest to character point
 	for (int32 i = 1; i < WallHitTraces.Num(); i++)
 	{
 		float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
@@ -628,23 +713,28 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 			WallHitResult = WallHitTraces[i];
 	}
 
+	// If optimal hit result is blocked at start, then stop function
 	if (WallHitResult.bStartPenetrating)
 		return;
 
+	// Set new WallRotation
 	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 		WallRotation = UParkourFunctionLibrary::NormalReverseRotationZ(WallHitResult.ImpactNormal);
 
+	// Trace sphere to have final check whether there is a top of the new edge
 	FVector StartLocation = WallHitResult.ImpactPoint;
 	StartLocation.Z += 3.0f;
 	FVector EndLocation = StartLocation;
 	EndLocation.Z -= 3.0f;
 
 	FHitResult HitResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, /*bDrawDebug*/ true);
 
+	// If hit result is not blocked by anything, then there is no top of the edge
 	if (!HitResult.bBlockingHit)
 		return;
 
+	// Set new wall top result
 	WallTopResult = HitResult;
 }
 
@@ -655,12 +745,14 @@ void UParkourComponent::OnCornerMoveCompleted()
 
 void UParkourComponent::StopClimbMovement()
 {
+	// Stop movement and set direction tag to NoDirection
 	CharacterMovement->StopMovementImmediately();
 	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection")));
 }
 
 void UParkourComponent::ResetMovement()
 {
+	// Set both forward and right scales to 0 and set direction tag to NoDirection
 	ForwardScale = 0.0f;
 	RightScale = 0.0f;
 	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection")));
