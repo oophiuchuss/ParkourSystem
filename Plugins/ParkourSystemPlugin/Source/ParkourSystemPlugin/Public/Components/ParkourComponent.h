@@ -142,11 +142,14 @@ private:
 	// Checks if a surface is suitable for climbing.
 	bool CheckClimbSurface();
 
-	// Determines the climb style based on the surface.
-	void CheckClimbStyle();
+	// Determines the climb style based on the surface. 
+	void CheckClimbStyle(const FHitResult& HitResult, const FRotator& Rotation);
 
-	// Returns the height for the first trace.
+	// Returns the height for the first trace for checking wall. 
 	float FirstTraceHeight() const;
+
+	// Checks and executes air hang or climb up 
+	void CheckAirHangOrClimb();
 
 	// Determines if the action should be a climb or hop.
 	void CheckClimbOrHop();
@@ -166,14 +169,14 @@ private:
 	// Checks for valid in-corner conditions.
 	bool CheckInCorner();
 
-	// Validates if a corner hop can be performed.
-	bool CheckCornerHop();
+	// Validates if a corner hop can be performed for in corners.
+	bool CheckInCornerHop();
 
 	// Validates if a ledge is valid for hop actions.
 	bool CheckLedgeValid();
 
 	// Performs hop action out of a corner.
-	bool OutCornerHop();
+	bool CheckOutCornerHop();
 
 	////////////////////////////////////////////////////////////////////
 	//
@@ -251,6 +254,7 @@ private:
 	// Determines the type of parkour action.
 	void ParkourType(bool bAutoClimb);
 
+
 	// Sets the current parkour action.
 	void SetParkourAction(const FGameplayTag& NewParkourAction);
 
@@ -265,9 +269,6 @@ private:
 
 	// Configures parkour settings.
 	void SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately);
-
-	// Sets the climb style while moving.
-	void SetClimbStyleOnMove(const FHitResult& HitResult, const FRotator& Rotation);
 
 	// Selects the appropriate hop action based on tags.
 	FGameplayTag SelectHopAction();
@@ -299,23 +300,17 @@ private:
 	//
 	////////////////////////////////////////////////////////////////////
 
-	// Calculates results for the first climb ledge.
-	void FirstClimbLedgeResultCalculation();
+	// Calculates results for the climb ledge.
+	void ClimbLedgeResultCalculation(FHitResult& ClimbLedgeResult);
 
-	// Calculates results for the second climb ledge.
-	void SecondClimbLedgeResultCalculation();
+	// Calculates IK for the hand on the ledge.
+	void HandLedgeIK(FHitResult& LedgeResult, bool bIsLeft);
 
-	// Calculates IK for the left hand on the ledge.
-	void LeftHandLedgeIK(FHitResult& LedgeResult);
-
-	// Calculates IK for the left foot.
-	void LeftFootIK(FHitResult& LedgeResult);
-
-	// Calculates IK for the right hand on the ledge.
-	void RightHandLedgeIK(FHitResult& LedgeResult);
-
-	// Calculates IK for the right foot.
-	void RightFootIK(FHitResult& LedgeResult);
+	// Sets all values for the hand IK
+	void SetHandIK(const FHitResult& FirstHitResult, const FHitResult& SecondHitResult, bool bIsLeft, bool bIsFinal);
+	
+	// Calculates IK for the foot.
+	void SetFootIK(FHitResult& LedgeResult, bool bIsLeft, bool bIsSimplified = false);
 
 	// Calculates IK for climbing movement.
 	void ClimbMoveIK();
@@ -323,20 +318,14 @@ private:
 	// Calculates IK for the hands during climbing movement.
 	void ClimbMoveHandIK();
 
-	// Calculates IK for the left hand during climbing movement.
-	void ClimbMoveLeftHandIK();
-
-	// Calculates IK for the right hand during climbing movement.
-	void ClimbMoveRightHandIK();
+	// Calculates IK for the  hand during climbing movement.
+	void UpdateClimbMoveHandIK(bool bIsLeft);
 
 	// Calculates IK for the feet during climbing movement.
 	void ClimbMoveFootIK();
 
 	// Calculates IK for the left foot during climbing movement.
-	void ClimbMoveLeftFootIK();
-
-	// Calculates IK for the right foot during climbing movement.
-	void ClimbMoveRightFootIK();
+	void UpdateClimbMoveFootIK(bool bIsLeft);
 
 	// Resets IK for the feet.
 	void ResetFootIK(bool bIsLeft);
@@ -381,11 +370,10 @@ private:
 	float CharacterHandUp;
 	float CharacterHandFront;
 	float FirstCameraTargetArmLenght;
-	float TargetArmLenght;
+	float TargetArmLength;
 	float ForwardScale;
 	float RightScale;
-	FVector FirstTargetRelativeLocation;
-	FVector TargetRelativeCameraLocation;
+
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
@@ -420,8 +408,12 @@ private:
 	FHitResult WallVaultResult;
 	FHitResult FirstClimbLedgeResult;
 	FHitResult SecondClimbLedgeResult;
-	FHitResult LeftHandClimbResult;
-	FHitResult RightHandClimbResult;
+	FVector FirstTargetRelativeLocation;
+	FVector TargetRelativeCameraLocation;
+	FVector LeftHandLedgeLocation;
+	FRotator LeftHandLedgeRotation;
+	FVector RightHandLedgeLocation;
+	FRotator RightHandLedgeRotation;
 	FRotator WallRotation;
 	FRotator CornerHopRotation;
 	UParkourVariables* ParkourVariables;
