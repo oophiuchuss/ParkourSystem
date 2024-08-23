@@ -285,10 +285,6 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 	if (Character->GetController() == nullptr)
 		return;
 
-	// Check is character currently reaching ledge
-	if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.ReachLedge"))
-		bFirstClimbMove = false;
-
 	ForwardScale = MovementVector.Y;
 	RightScale = MovementVector.X;
 
@@ -493,9 +489,6 @@ void UParkourComponent::ClimbMove()
 
 	// Call function to check and set needed climb style on move
 	CheckClimbStyle(InnerLoopHitResult, WallRotation);
-
-	// Used for IK
-	bFirstClimbMove = true;
 }
 
 void UParkourComponent::HopAction()
@@ -512,9 +505,6 @@ void UParkourComponent::HopAction()
 
 void UParkourComponent::CornerMove(const FVector& TargerRelativeLocation, const FRotator& TargerRelativeRotation)
 {
-	// Used for IK
-	bFirstClimbMove = true;
-
 	// Set appropriate tag
 	SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.CornerMove")));
 
@@ -1813,7 +1803,7 @@ void UParkourComponent::FindHopLocation()
 	{
 		float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
 		float Distance2 = FVector::Distance(Character->GetActorLocation(), WallHitResult.ImpactPoint);
-		if (Distance1 <= Distance2)
+		if (Distance1 >= Distance2)
 			WallHitResult = WallHitTraces[i];
 	}
 
@@ -1883,8 +1873,8 @@ FGameplayTag UParkourComponent::GetClimbDesireRotation()
 	// |  Y ∈ [-1.0, -0.5]	| Forward Left				| Left					    | Backward Left					|
 
 
-	DesireRotationZ = GetVerticalAxis();
-	DesireRotationY = GetHorizontalAxis();
+	float DesireRotationZ = GetVerticalAxis();
+	float DesireRotationY = GetHorizontalAxis();
 
 	if (DesireRotationZ >= 0.5f && DesireRotationZ <= 1.0f)
 	{
@@ -2195,8 +2185,6 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 		ResetParkourResults();
 		return;
 	}
-
-	BlendOutState = ParkourVariables->ParkourOutState;
 
 	PlayParkourMontage();
 }
@@ -2716,7 +2704,7 @@ void UParkourComponent::ClimbMoveIK()
 
 void UParkourComponent::ClimbMoveHandIK()
 {
-	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb") || !bFirstClimbMove)
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb") )
 		return;
 
 	UpdateClimbMoveHandIK(true);
@@ -2822,7 +2810,7 @@ void UParkourComponent::UpdateClimbMoveHandIK(bool bIsLeft)
 
 void UParkourComponent::ClimbMoveFootIK()
 {
-	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb") || !bFirstClimbMove)
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 		return;
 
 	UpdateClimbMoveFootIK(true);
@@ -2996,6 +2984,6 @@ void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bIn
 	if (bInterrupted)
 		return;
 
-	SetParkourState(BlendOutState);
+	SetParkourState(ParkourVariables->ParkourOutState);
 	SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
 }

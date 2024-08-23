@@ -354,16 +354,31 @@ private:
 	//
 	////////////////////////////////////////////////////////////////////
 
+	UPROPERTY()
 	ACharacter* Character;
+	UPROPERTY()
 	UCharacterMovementComponent* CharacterMovement;
+	UPROPERTY()
 	USkeletalMeshComponent* CharacterMesh;
+	UPROPERTY()
 	UAnimInstance* AnimInstance;
+	UPROPERTY()
 	UCapsuleComponent* CapsuleComponent;
+	UPROPERTY()
 	USpringArmComponent* CameraBoom;
+	UPROPERTY()
 	UMotionWarpingComponent* MotionWarping;
+	UPROPERTY()
 	UCameraComponent* Camera;
+	UPROPERTY()
+	UCurveFloat* CameraCurve;
+	UPROPERTY()
 	AWidgetActor* WidgetActor;
+	UPROPERTY()
 	AArrowActor* ArrowActor;
+	UPROPERTY()
+	UParkourVariables* ParkourVariables;
+
 	float ArrowLocationX;
 	float ArrowLocationZ;
 	float CharacterHeightDiff;
@@ -378,29 +393,31 @@ private:
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
 	FGameplayTag ClimbDirection;
-	FGameplayTag BlendOutState;
+
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
 	bool bOnGround;
-	bool bFirstClimbMove;
-	bool bCanCornerHop;
+
 	float WallHeight;
 	float WallDepth;
 	float VaultHeight;
+
 	float CameraCurveAlpha;
 	float MontageStartTime;
+	
 	float HorizontalClimbForwardValue;
 	float VerticalClimbForwardValue;
 	float HorizontalClimbRightValue;
 	float VerticalClimbRightValue;
-	float DesireRotationZ;
-	float DesireRotationY;
+
 	float ClimbMoveCheckDistance;
 	float ClimbHandSpace;
 	float VerticalHopDistance;
 	float HorizontalHopDistance;
+
 	TArray<FHitResult> WallHitTraces;
 	TArray<FHitResult> HopHitTraces;
+	
 	FHitResult WallHitResult;
 	FHitResult WallTopResult;
 	FHitResult TopHits;
@@ -408,17 +425,18 @@ private:
 	FHitResult WallVaultResult;
 	FHitResult FirstClimbLedgeResult;
 	FHitResult SecondClimbLedgeResult;
+	
 	FVector FirstTargetRelativeLocation;
 	FVector TargetRelativeCameraLocation;
 	FVector LeftHandLedgeLocation;
-	FRotator LeftHandLedgeRotation;
 	FVector RightHandLedgeLocation;
+	FRotator LeftHandLedgeRotation;
 	FRotator RightHandLedgeRotation;
+
 	FRotator WallRotation;
 	FRotator CornerHopRotation;
-	UParkourVariables* ParkourVariables;
+
 	FTimerHandle TimerHandle_DelayedFunction;
 	FTimerHandle TimerHandle_FinishCameraTimeline;
 	FTimerHandle TimerHandle_TickCameraTimeline;
-	UCurveFloat* CameraCurve;
 };
