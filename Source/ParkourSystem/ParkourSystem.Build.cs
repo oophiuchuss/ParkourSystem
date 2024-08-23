@@ -9,32 +9,41 @@ public class ParkourSystem : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[] { 
-            //Default
+            // Default
             "Core",
-                "CoreUObject",
-                "Engine",
-                "InputCore",
-                "EnhancedInput",
-                "GameplayTags",
-                "MotionWarping",
-                "UMG",
-                "ParkourSystemPlugin"
+            "CoreUObject",
+            "Engine",
+            "InputCore",
+            "EnhancedInput",
+            "GameplayTags",
+            "MotionWarping",
+            "UMG",
+            "ParkourSystemPlugin"
         });
 
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                    "Projects",
-                    "InputCore",
+                "Projects",
+                "InputCore",
+                "CoreUObject",
+                "Engine",
+                "Slate",
+                "SlateCore",
+                // ... add private dependencies that you statically link with here ...
+            }
+        );
+
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.AddRange(
+                new string[]
+                {
                     "EditorFramework",
                     "UnrealEd",
                     "ToolMenus",
-                    "CoreUObject",
-                    "Engine",
-                    "Slate",
-                    "SlateCore",
-                // ... add private dependencies that you statically link with here ...	
-            }
-         );
+                }
+            );
+        }
     }
 }
