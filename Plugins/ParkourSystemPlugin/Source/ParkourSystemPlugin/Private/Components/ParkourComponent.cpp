@@ -20,30 +20,8 @@
 #include "ParkourFunctionLibrary.h"
 #include "ParkourABPInterface.h"
 #include "ParkourStatsInterface.h"
+#include "ParkourVariables.h"
 
-// Data assets for animation adjustments
-#include "ThinVaultDT.h"
-#include "VaultDT.h"
-#include "HighVaultDT.h"
-#include "MantleDT.h"
-#include "LowMantleDT.h"
-#include "BracedClimbDT.h"
-#include "FreeHangDT.h"
-#include "BracedClimbUpDT.h"
-#include "FreeHangClimbUpDT.h"
-#include "FallingBracedClimbDT.h"
-#include "FallingFreeHangClimbDT.h"
-#include "BracedDropDownDT.h"
-#include "FreeHangDropDownDT.h"
-#include "ClimbHopUpDT.h"
-#include "ClimbHopLeftDT.h"
-#include "ClimbHopRightDT.h"
-#include "ClimbHopLeftUpDT.h"
-#include "ClimbHopRightUpDT.h"
-#include "ClimbHopDownDT.h"
-#include "FreeClimbHopLeftDT.h"
-#include "FreeClimbHopRightDT.h"
-#include "FreeClimbHopDownDT.h"
 
 UParkourComponent::UParkourComponent()
 {
@@ -53,7 +31,7 @@ UParkourComponent::UParkourComponent()
 
 	// Serach for Camera curve and set reference
 	FString path = "/ParkourSystemPlugin/Curves/FC_ParkourCameraMove";
-	ConstructorHelpers::FObjectFinder<UCurveFloat> MontageAsset(*path);
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> MontageAsset(*path);
 
 	if (MontageAsset.Succeeded())
 		CameraCurve = MontageAsset.Object;
@@ -74,6 +52,8 @@ UParkourComponent::UParkourComponent()
 	bCanManualClimb = true;
 	bDrawDebug = false;
 	bOnGround = true;
+
+	PreinitializeParkourDataAssets(ParkourVariablesCollection);
 }
 
 void UParkourComponent::BeginPlay()
@@ -1803,7 +1783,7 @@ void UParkourComponent::FindHopLocation()
 	{
 		float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
 		float Distance2 = FVector::Distance(Character->GetActorLocation(), WallHitResult.ImpactPoint);
-		if (Distance1 >= Distance2)
+		if (Distance1 <= Distance2)
 			WallHitResult = WallHitTraces[i];
 	}
 
@@ -2094,91 +2074,91 @@ void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 
 	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ThinVault"))
 	{
-		ParkourVariables = NewObject<UThinVaultDT>();
+		ParkourVariables = ParkourVariablesCollection.ThinVaultDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.HighVault"))
 	{
-		ParkourVariables = NewObject<UHighVaultDT>();
+		ParkourVariables = ParkourVariablesCollection.HighVaultDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Vault"))
 	{
-		ParkourVariables = NewObject<UVaultDT>();
+		ParkourVariables = ParkourVariablesCollection.VaultDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Mantle"))
 	{
-		ParkourVariables = NewObject<UMantleDT>();
+		ParkourVariables = ParkourVariablesCollection.MantleDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.LowMantle"))
 	{
-		ParkourVariables = NewObject<ULowMantleDT>();
+		ParkourVariables = ParkourVariablesCollection.LowMantleDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.Climb"))
 	{
-		ParkourVariables = NewObject<UBracedClimbDT>();
+		ParkourVariables = ParkourVariablesCollection.BracedClimbDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangClimb"))
 	{
-		ParkourVariables = NewObject<UFreeHangDT>();
+		ParkourVariables = ParkourVariablesCollection.FreeHangDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbingUp"))
 	{
-		ParkourVariables = NewObject<UBracedClimbUpDT>();
+		ParkourVariables = ParkourVariablesCollection.BracedClimbUpDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangClimbUp"))
 	{
-		ParkourVariables = NewObject<UFreeHangClimbUpDT>();
+		ParkourVariables = ParkourVariablesCollection.FreeHangClimbUpDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FallingBraced"))
 	{
-		ParkourVariables = NewObject<UFallingBracedClimbDT>();
+		ParkourVariables = ParkourVariablesCollection.FallingBracedClimbDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FallingFreeHang"))
 	{
-		ParkourVariables = NewObject<UFallingFreeHangClimbDT>();
+		ParkourVariables = ParkourVariablesCollection.FallingFreeHangClimbDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.DropDown"))
 	{
-		ParkourVariables = NewObject<UBracedDropDownDT>();
+		ParkourVariables = ParkourVariablesCollection.BracedDropDownDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeHangDropDown"))
 	{
-		ParkourVariables = NewObject<UFreeHangDropDownDT>();
+		ParkourVariables = ParkourVariablesCollection.FreeHangDropDownDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopUp"))
 	{
-		ParkourVariables = NewObject<UClimbHopUpDT>();
+		ParkourVariables = ParkourVariablesCollection.ClimbHopUpDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopLeft"))
 	{
-		ParkourVariables = NewObject<UClimbHopLeftDT>();
+		ParkourVariables = ParkourVariablesCollection.ClimbHopLeftDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopRight"))
 	{
-		ParkourVariables = NewObject<UClimbHopRightDT>();
+		ParkourVariables = ParkourVariablesCollection.ClimbHopRightDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopLeftUp"))
 	{
-		ParkourVariables = NewObject<UClimbHopLeftUpDT>();
+		ParkourVariables = ParkourVariablesCollection.ClimbHopLeftUpDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopRightUp"))
 	{
-		ParkourVariables = NewObject<UClimbHopRightUpDT>();
+		ParkourVariables = ParkourVariablesCollection.ClimbHopRightUpDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.ClimbHopDown"))
 	{
-		ParkourVariables = NewObject<UClimbHopDownDT>();
+		ParkourVariables = ParkourVariablesCollection.ClimbHopDownDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopLeft"))
 	{
-		ParkourVariables = NewObject<UFreeClimbHopLeftDT>();
+		ParkourVariables = ParkourVariablesCollection.FreeClimbHopLeftDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopRight"))
 	{
-		ParkourVariables = NewObject<UFreeClimbHopRightDT>();
+		ParkourVariables = ParkourVariablesCollection.FreeClimbHopRightDT;
 	}
 	else if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.FreeClimbHopDown"))
 	{
-		ParkourVariables = NewObject<UFreeClimbHopDownDT>();
+		ParkourVariables = ParkourVariablesCollection.FreeClimbHopDownDT;
 	}
 	else
 	{
@@ -2704,7 +2684,7 @@ void UParkourComponent::ClimbMoveIK()
 
 void UParkourComponent::ClimbMoveHandIK()
 {
-	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb") )
+	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 		return;
 
 	UpdateClimbMoveHandIK(true);
@@ -2909,6 +2889,8 @@ void UParkourComponent::ResetFootIK(bool bIsLeft)
 
 void UParkourComponent::PlayParkourMontage()
 {
+	checkf(ParkourVariables != nullptr, TEXT("ParkourVariables are not initialized for \"%s\" action"), *ParkourActionTag.GetTagName().ToString());
+	
 	SetParkourState(ParkourVariables->ParkourInState);
 
 	// FirstTopResultOffset used for any edge interaction (like reach ledge, climb on the ledge, hop on the ledge, etc.)
@@ -2977,6 +2959,75 @@ void UParkourComponent::FindMontageStartTime()
 	}
 
 	MontageStartTime = ParkourVariables->MontageStartPosition;
+}
+
+void UParkourComponent::PreinitializeParkourDataAssets(FParkourVariablesCollection& ParkourCollection) const
+{
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> BracedClimbDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_BracedClimb"));
+	ParkourCollection.BracedClimbDT = BracedClimbDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> BracedClimbUpDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_BracedClimbUp"));
+	ParkourCollection.BracedClimbUpDT = BracedClimbUpDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> BracedDropDownDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_BracedDropDown"));
+	ParkourCollection.BracedDropDownDT = BracedDropDownDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> ClimbHopDownDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_ClimbHopDown"));
+	ParkourCollection.ClimbHopDownDT = ClimbHopDownDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> ClimbHopLeftDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_ClimbHopLeft"));
+	ParkourCollection.ClimbHopLeftDT = ClimbHopLeftDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> ClimbHopLeftUpDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_ClimbHopLeftUp"));
+	ParkourCollection.ClimbHopLeftUpDT = ClimbHopLeftUpDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> ClimbHopRightDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_ClimbHopRight"));
+	ParkourCollection.ClimbHopRightDT = ClimbHopRightDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> ClimbHopRightUpDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_ClimbHopRightUp"));
+	ParkourCollection.ClimbHopRightUpDT = ClimbHopRightUpDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> ClimbHopUpDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_ClimbHopUp"));
+	ParkourCollection.ClimbHopUpDT = ClimbHopUpDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FallingBracedClimbDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FallingBracedClimb"));
+	ParkourCollection.FallingBracedClimbDT = FallingBracedClimbDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FallingFreeHangClimbDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FallingFreeHangClimb"));
+	ParkourCollection.FallingFreeHangClimbDT = FallingFreeHangClimbDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FreeClimbHopDownDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FreeClimbHopDown"));
+	ParkourCollection.FreeClimbHopDownDT = FreeClimbHopDownDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FreeClimbHopLeftDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FreeClimbHopLeft"));
+	ParkourCollection.FreeClimbHopLeftDT = FreeClimbHopLeftDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FreeClimbHopRightDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FreeClimbHopRight"));
+	ParkourCollection.FreeClimbHopRightDT = FreeClimbHopRightDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FreeHangClimbUpDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FreeHangClimbUp"));
+	ParkourCollection.FreeHangClimbUpDT = FreeHangClimbUpDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FreeHangDropDownDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FreeHangDropDown"));
+	ParkourCollection.FreeHangDropDownDT = FreeHangDropDownDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> FreeHangDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_FreeHang"));
+	ParkourCollection.FreeHangDT = FreeHangDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> HighVaultDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_HighVault"));
+	ParkourCollection.HighVaultDT = HighVaultDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> LowMantleDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_LowMantle"));
+	ParkourCollection.LowMantleDT = LowMantleDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> MantleDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_Mantle"));
+	ParkourCollection.MantleDT = MantleDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> ThinVaultDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_ThinVault"));
+	ParkourCollection.ThinVaultDT = ThinVaultDTObj.Object;
+
+	static ConstructorHelpers::FObjectFinder<UParkourVariables> VaultDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_Vault"));
+	ParkourCollection.VaultDT = VaultDTObj.Object;
 }
 
 void UParkourComponent::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)

@@ -7,14 +7,18 @@
 #include "WidgetActor.h"
 #include "ArrowActor.h"
 #include "GameplayTagContainer.h"
-#include "ParkourVariables.h"
 #include "Curves/CurveFloat.h"
+#include "ParkourVariablesCollection.h"
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "ParkourComponent.generated.h"
 
 struct FInputActionValue;
+struct FParkourVariablesCollection;
+class UParkourVariables;
+class UInputMappingContext;
+class UInputAction;
 
 /**
  * Component for handling parkour-related actions, animations, and state management.
@@ -30,19 +34,22 @@ public:
 
 	// Input mapping context for parkour actions.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* ParkourMappingContext;
+	TObjectPtr<UInputMappingContext> ParkourMappingContext;
 
 	// Input action for initiating parkour actions.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* ParkourInputAction;
+	TObjectPtr<UInputAction> ParkourInputAction;
 
 	// Input action for performing parkour drop down.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* ParkourDropInputAction;
+	TObjectPtr<UInputAction> ParkourDropInputAction;
 
 	// Input action for parkour movement.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* ParkourMoveInputAction;
+	TObjectPtr<UInputAction> ParkourMoveInputAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem")
+	FParkourVariablesCollection ParkourVariablesCollection;
 
 	// Flag to enable or disable debug drawing.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem")
@@ -254,7 +261,6 @@ private:
 	// Determines the type of parkour action.
 	void ParkourType(bool bAutoClimb);
 
-
 	// Sets the current parkour action.
 	void SetParkourAction(const FGameplayTag& NewParkourAction);
 
@@ -308,7 +314,7 @@ private:
 
 	// Sets all values for the hand IK
 	void SetHandIK(const FHitResult& FirstHitResult, const FHitResult& SecondHitResult, bool bIsLeft, bool bIsFinal);
-	
+
 	// Calculates IK for the foot.
 	void SetFootIK(FHitResult& LedgeResult, bool bIsLeft, bool bIsSimplified = false);
 
@@ -348,6 +354,8 @@ private:
 	// Finds the start time for the montage.
 	void FindMontageStartTime();
 
+	void PreinitializeParkourDataAssets(FParkourVariablesCollection& ParkourCollection) const;
+
 	////////////////////////////////////////////////////////////////////
 	//
 	//	VARIABLES AND REFERENCES
@@ -355,29 +363,29 @@ private:
 	////////////////////////////////////////////////////////////////////
 
 	UPROPERTY()
-	ACharacter* Character;
+	TObjectPtr<ACharacter> Character;
 	UPROPERTY()
-	UCharacterMovementComponent* CharacterMovement;
+	TObjectPtr<UCharacterMovementComponent> CharacterMovement;
 	UPROPERTY()
-	USkeletalMeshComponent* CharacterMesh;
+	TObjectPtr<USkeletalMeshComponent> CharacterMesh;
 	UPROPERTY()
-	UAnimInstance* AnimInstance;
+	TObjectPtr<UAnimInstance> AnimInstance;
 	UPROPERTY()
-	UCapsuleComponent* CapsuleComponent;
+	TObjectPtr<UCapsuleComponent> CapsuleComponent;
 	UPROPERTY()
-	USpringArmComponent* CameraBoom;
+	TObjectPtr<USpringArmComponent> CameraBoom;
 	UPROPERTY()
-	UMotionWarpingComponent* MotionWarping;
+	TObjectPtr<UMotionWarpingComponent> MotionWarping;
 	UPROPERTY()
-	UCameraComponent* Camera;
+	TObjectPtr<UCameraComponent> Camera;
 	UPROPERTY()
-	UCurveFloat* CameraCurve;
+	TObjectPtr<UCurveFloat> CameraCurve;
 	UPROPERTY()
-	AWidgetActor* WidgetActor;
+	TObjectPtr<AWidgetActor> WidgetActor;
 	UPROPERTY()
-	AArrowActor* ArrowActor;
+	TObjectPtr<AArrowActor> ArrowActor;
 	UPROPERTY()
-	UParkourVariables* ParkourVariables;
+	TObjectPtr<UParkourVariables> ParkourVariables;
 
 	float ArrowLocationX;
 	float ArrowLocationZ;
@@ -404,7 +412,7 @@ private:
 
 	float CameraCurveAlpha;
 	float MontageStartTime;
-	
+
 	float HorizontalClimbForwardValue;
 	float VerticalClimbForwardValue;
 	float HorizontalClimbRightValue;
@@ -417,7 +425,7 @@ private:
 
 	TArray<FHitResult> WallHitTraces;
 	TArray<FHitResult> HopHitTraces;
-	
+
 	FHitResult WallHitResult;
 	FHitResult WallTopResult;
 	FHitResult TopHits;
@@ -425,7 +433,7 @@ private:
 	FHitResult WallVaultResult;
 	FHitResult FirstClimbLedgeResult;
 	FHitResult SecondClimbLedgeResult;
-	
+
 	FVector FirstTargetRelativeLocation;
 	FVector TargetRelativeCameraLocation;
 	FVector LeftHandLedgeLocation;

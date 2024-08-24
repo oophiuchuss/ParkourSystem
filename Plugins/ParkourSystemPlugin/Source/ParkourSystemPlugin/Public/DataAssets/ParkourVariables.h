@@ -19,7 +19,7 @@ class PARKOURSYSTEMPLUGIN_API UParkourVariables : public UPrimaryDataAsset
 public:
 	// Animation montage for parkour actions.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParkourSystem")
-	UAnimMontage* ParkourMontage;
+	TObjectPtr<UAnimMontage> ParkourMontage;
 
 	// Gameplay tag representing the state when entering parkour.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ParkourSystem")
