@@ -20,6 +20,92 @@ class UParkourVariables;
 class UInputMappingContext;
 class UInputAction;
 
+USTRUCT(BlueprintType)
+struct FClimbMoveParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Threshold for determining if the horizontal axis is significant for climbing moves."))
+	float MoveHorizontalAxisThreshold = 0.7f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Number of iterations for the outer loop checking climb move."))
+	int32 OuterLoopIterationsNum = 3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Step size in Z direction for each iteration of the outer loop."))
+	float OuterLoopStepZ = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Distance to check forward from the character during the climb move."))
+	float ForwardCheckDistance = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Offset to the right of the character during the climb move."))
+	float RightOffset = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Radius of the sphere trace used in the outer loop."))
+	float SphereTraceRadiusOuter = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugOuter = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Number of iterations for the inner loop checking climb move."))
+	int32 InnerLoopIterationsNum = 7;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Offset forward for each iteration of the inner loop."))
+	float ForwardOffset = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Step size in Z direction for each iteration of the inner loop."))
+	float InnerLoopStepZ = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Z offset to apply to the end of the inner loop trace."))
+	float InnerLoopZOffset = 55.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Radius of the sphere trace used in the inner loop."))
+	float SphereTraceRadiusInner = 2.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the inner loop trace."))
+	bool bDrawDebugInner = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Number of iterations for checking sides."))
+	int32 NumSideChecks = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Step size in Z direction for each side check iteration."))
+	float SideCheckStepZ = 9.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Initial Z offset for side checks."))
+	float SideCheckInitialZOffset = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Distance to trace left/right for side checks."))
+	float SideTraceDistance = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Radius of the trace for side checks."))
+	float SideTraceRadius = 4.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for side checks."))
+	bool bDrawDebugSideCheck = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Speed for interpolating character rotation."))
+	float RotationInterpSpeed = 4.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "X style multiplier for braced climbing style."))
+	float XStyleBraced = -44.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "X style multiplier for free climbing style."))
+	float XStyleFree = -7.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Z style multiplier for braced climbing style."))
+	float ZStyleBraced = 107.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Z style multiplier for free climbing style."))
+	float ZStyleFree = 115.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Interpolation speed for Z axis in braced climbing style."))
+	float ZInterpSpeedBraced = 2.7f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Interpolation speed for Z axis in free climbing style."))
+	float ZInterpSpeedFree = 1.8f;
+};
+
+
+
 /**
  * Component for handling parkour-related actions, animations, and state management.
  */
@@ -48,8 +134,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> ParkourMoveInputAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|DataAssets")
 	FParkourVariablesCollection ParkourVariablesCollection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Variables")
+	FClimbMoveParams ClimbMoveParams;
+
 
 	// Flag to enable or disable debug drawing.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem")
@@ -418,7 +508,6 @@ private:
 	float HorizontalClimbRightValue;
 	float VerticalClimbRightValue;
 
-	float ClimbMoveCheckDistance;
 	float ClimbHandSpace;
 	float VerticalHopDistance;
 	float HorizontalHopDistance;
@@ -447,4 +536,18 @@ private:
 	FTimerHandle TimerHandle_DelayedFunction;
 	FTimerHandle TimerHandle_FinishCameraTimeline;
 	FTimerHandle TimerHandle_TickCameraTimeline;
+
+	//SetInitializeReferences
+	FVector WidgetActorPosition = FVector(100.0f, 50.0f, -3.0f);
+
+	//AutoClimb
+	float BracedAutoClimbBoxCheckZ = 50.0f;
+	float FreeAutoClimbBoxCheckZ = 2.0f;
+	FVector AutoClimbBoxExtend = FVector(10.0f, 10.0f, 4.0f);
+
+	//ParkourDrop
+	float ManualClimbDropDelay = 0.3f;
+
+	// ClimbMove
+
 };
