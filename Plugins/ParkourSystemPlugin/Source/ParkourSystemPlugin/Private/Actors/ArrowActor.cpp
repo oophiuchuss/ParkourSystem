@@ -12,6 +12,8 @@ AArrowActor::AArrowActor()
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Component"));
 	RootComponent = SceneComponent;
 
+	SceneComponent->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
+
 	//Create an arrow component itself
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
 	ArrowComponent->SetupAttachment(RootComponent);
