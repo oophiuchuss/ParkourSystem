@@ -110,7 +110,7 @@ struct FCornerMoveParams
 	float OverTimeBraced = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Interpolation speed for Z axis in free climbing style."))
-	float OverTimeFree= 0.9f;
+	float OverTimeFree = 0.9f;
 };
 
 USTRUCT(BlueprintType)
@@ -152,6 +152,364 @@ struct FOutCornerMoveParams
 	float TargetLocationZOffset = 107.0f;
 };
 
+USTRUCT(BlueprintType)
+struct FCornerHopParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float CornerHorizontalHopDistanceOut = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop when not an outer corner."))
+	float CornerHorizontalHopDistanceIn = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	int32 OuterStartIndexLeft = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop when moving right."))
+	int32 OuterStartIndexRight = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "End index for the loop when moving right."))
+	int32 OuterNumOfIterations = 3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float OuterRightOffsetStep = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float OuterForwardOffset = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float OuterLoopForwardCheckDistance = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugOuter = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to adjust start and end locations in inner loop."))
+	float OuterLoopZAdjustment = 16.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop when moving right."))
+	int32 InnerNumOfIterations = 20;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugInner = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Step size for Z adjustments in inner loop."))
+	float DistanceThreshold = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Step size for Z adjustments in inner loop."))
+	float InnerLoopZStep = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to trace capsule for checking fitting and collisions."))
+	float CapsuleTraceForwardDistance = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float CapsuleHalfHeightAdjustment = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float ClosestCheckForwardOffset = 40.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float ClosestCheckRightOffset = 4.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float ClosestCheckRightDistance = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float ClosestCheckCapsuleRadius = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugCapsuleCheck = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to adjust the start location of the wall top trace."))
+	float TopCheckZDistance = 3.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float TopCheckSpehreRadius = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugTopCheck = false;
+};
+
+USTRUCT(BlueprintType)
+struct FChekcWallShapeParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float CornerHorizontalHopDistanceOut = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop when not an outer corner."))
+	float CornerHorizontalHopDistanceIn = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	int32 OuterNumOfIterationsFalling = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop when moving right."))
+	int32 OuterNumOfIterationsDefault = 15;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "End index for the loop when moving right."))
+	int32 InnerNumOfIterations = 11;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float InnerInitialForwardOffset = 20.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float InnerZOffsetStep = 16.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float InnerForwardOffsetStep = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float InnerInitialForwardDistance = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for line traces in outer loop."))
+	float InnerSphereRadius = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugInner = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop when moving right."))
+	int32 NumOfColumnIterationsDefault = 4;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop when moving right."))
+	int32 NumOfColumnIterationsClimb = 2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to adjust start and end locations in inner loop."))
+	float ColumnClimbZOffset = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to adjust start and end locations in inner loop."))
+	float ColumnClimbRightOffsetStep = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to adjust start and end locations in inner loop."))
+	float ColumnClimbInitialRightOffset = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to adjust start and end locations in inner loop."))
+	float ColumnClimbInitialForwardOffset = 40.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to adjust start and end locations in inner loop."))
+	float ColumnClimbForwardDistance = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugColumn = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop when moving right."))
+	int32 NumOfRowIterationsDefault = 29;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop when moving right."))
+	int32 NumOfRowIterationsClimb = 6;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Step size for Z adjustments in inner loop."))
+	float RowZOffsetStep = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugRow = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Step size for Z adjustments in inner loop."))
+	float DistanceThreshold = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Step size for Z adjustments in inner loop."))
+	int32 NumOfTopCheckIterations = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to trace capsule for checking fitting and collisions."))
+	float TopCheckForwardOffsetStep = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance to trace capsule for checking fitting and collisions."))
+	float TopCheckInitialForwardOffset = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float TopCheckZDistance = 7.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float TopCheckSphereRadius = 2.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugTopCheck = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float DepthCheckForwardDistance = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float DepthCheckSphereRadius = 2.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugDepthCheck = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float VaultCheckForwardDistance = 70.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float VaultCheckZOffset = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Height of the capsule for collision checks."))
+	float VaultCheckSphereRadius = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugVaultCheck = false;
+};
+
+USTRUCT(BlueprintType)
+struct FCheckMantleSurfaceParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float ZOffset = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop when not an outer corner."))
+	float HalfHeightAdjustment = -8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	float CapsuleRadius = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebug = false;
+};
+
+USTRUCT(BlueprintType)
+struct FCheckVaultSurfaceParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float ZOffset = 18.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop when not an outer corner."))
+	float HalfHeightAdjustment = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	float CapsuleRadius = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebug = false;
+};
+
+USTRUCT(BlueprintType)
+struct FCheckClimbSurfaceParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float ZOffset = -90.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float ForwardOffset = -55.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	float CapsuleRadius = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebug = false;
+};
+
+USTRUCT(BlueprintType)
+struct FCheckClimbStyleParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float ZOffset = 125.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float ForwardOffset = 10.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float ForwardCheckDistance = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	float SphereCheckRadius = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebug = false;
+};
+
+USTRUCT(BlueprintType)
+struct FFirstTraceHeightParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float NonClimbingPresetValue = -60.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	int32 OuterNumOfiTerations = 5;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	FName RightHandSocketName = "hand_r";
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	FName LeftHandSocketName = "hand_l";
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float OuterForwardOffset = 20.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float OuterForwardCheckDistance = 20.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float OuterSphereCheckRadius = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugOuter = false;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	int32 InnerNumOfiTerations = 10;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float InnerForwardOffset = 2.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float InnerZInitialOffset = 5.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float InnerZOffsetStep = 10.0f;
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float InnerZCheckDistance = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	float InnerSphereCheckRadius = 2.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugInner = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Start index for the loop based on horizontal axis direction."))
+	float ResultZAdjustment = 4.0f;
+};
+
+USTRUCT(BlueprintType)
+struct FCheckAirHangParams
+{
+	GENERATED_BODY()
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	FName HeadSocketName = "head";
+
+	// Horizontal distance for the hop based on whether it's an outer corner or not
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Horizontal distance for the hop, modified based on whether it's an outer corner or not."))
+	float HeadLedgeThreshold = 30.0f;
+};
 
 
 /**
@@ -185,14 +543,38 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|DataAssets")
 	FParkourVariablesCollection ParkourVariablesCollection;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Variables")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
 	FClimbMoveParams ClimbMoveParams;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Variables")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
 	FCornerMoveParams CornerMoveParams;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Variables")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
 	FOutCornerMoveParams OutCornerMoveParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FCornerHopParams CornerHopParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FChekcWallShapeParams ChekcWallShapeParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FCheckMantleSurfaceParams CheckMantleSurfaceParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FCheckVaultSurfaceParams CheckVaultSurfaceParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FCheckClimbSurfaceParams CheckClimbSurfaceParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FCheckClimbStyleParams CheckClimbStyleParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FFirstTraceHeightParams FirstTraceHeightParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
+	FCheckAirHangParams CheckAirHangParams;
 
 
 	// Flag to enable or disable debug drawing.
@@ -591,6 +973,8 @@ private:
 	FTimerHandle TimerHandle_FinishCameraTimeline;
 	FTimerHandle TimerHandle_TickCameraTimeline;
 
+	// TODO: Move those to general struct
+
 	//SetInitializeReferences
 	FVector WidgetActorPosition = FVector(100.0f, 50.0f, -3.0f);
 
@@ -602,6 +986,6 @@ private:
 	//ParkourDrop
 	float ManualClimbDropDelay = 0.3f;
 
-	// ClimbMove
-
+	// CheckDistance
+	FName RootSocketName = "root";
 };
