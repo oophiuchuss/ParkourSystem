@@ -55,9 +55,6 @@ struct FClimbMoveParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Step size in Z direction for each iteration of the inner loop."))
 	float InnerLoopStepZ = 5.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Z offset to apply to the end of the inner loop trace."))
-	float InnerLoopZOffset = 55.0f;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Radius of the sphere trace used in the inner loop."))
 	float SphereTraceRadiusInner = 2.5f;
 
@@ -104,6 +101,57 @@ struct FClimbMoveParams
 	float ZInterpSpeedFree = 1.8f;
 };
 
+USTRUCT(BlueprintType)
+struct FCornerMoveParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Interpolation speed for Z axis in free climbing style."))
+	float OverTimeBraced = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Interpolation speed for Z axis in free climbing style."))
+	float OverTimeFree= 0.9f;
+};
+
+USTRUCT(BlueprintType)
+struct FOutCornerMoveParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Number of iterations for the loop to check the top of the wall."))
+	float IndexMultiplierZOffset = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance for the sphere trace to check for a wall on the side."))
+	float SideTraceDistance = 60.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Radius of the sphere trace for checking walls."))
+	float SideTraceRadius = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugSide = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Number of iterations for the loop to check the top of the wall."))
+	int32 LoopIterationsNum = 5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Distance increments for checking the top of the wall."))
+	float LoopDistanceIncrement = 5.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Radius of the sphere trace for checking walls."))
+	float LoopTraceRadius = 2.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the outer loop trace."))
+	bool bDrawDebugLoop = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Multiplier for calculating the target relative location based on climbing style."))
+	float StyleMultiplierBraced = 44.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Multiplier for calculating the target relative location based on climbing style."))
+	float StyleMultiplierFree = 7.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour Movement", meta = (Tooltip = "Value subtracted from the target Z calculation based on climbing style."))
+	float TargetLocationZOffset = 107.0f;
+};
+
 
 
 /**
@@ -139,6 +187,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Variables")
 	FClimbMoveParams ClimbMoveParams;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Variables")
+	FCornerMoveParams CornerMoveParams;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Variables")
+	FOutCornerMoveParams OutCornerMoveParams;
 
 
 	// Flag to enable or disable debug drawing.

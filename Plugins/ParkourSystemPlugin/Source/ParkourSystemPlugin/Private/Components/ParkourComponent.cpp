@@ -364,7 +364,7 @@ void UParkourComponent::ClimbMove()
 			StartLocation.Z += ClimbMoveParams.InnerLoopStepZ * (j + 1);
 
 			EndLocation = StartLocation;
-			EndLocation.Z -= ClimbMoveParams.InnerLoopZOffset;
+			EndLocation.Z -= ClimbMoveParams.InnerLoopStepZ * (j + 10);
 
 			// Trace sphere to check whether there is the top of the edge
 			// Start gets higher after each iteration
@@ -490,7 +490,7 @@ void UParkourComponent::CornerMove(const FVector& TargerRelativeLocation, const 
 	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName(NewDirectionName)));
 
 	// Set time depending on climb style
-	float OverTimeByStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(0.5f, 0.9f, ClimbStyle);
+	float OverTimeByStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(CornerMoveParams.OverTimeBraced, CornerMoveParams.OverTimeFree, ClimbStyle);
 
 	// Initialize needed variables for Latent action info
 	FLatentActionInfo LatentInfo;
@@ -514,35 +514,35 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 	FVector RightVector = ArrowActor->GetArrowComponent()->GetComponentRotation().RotateVector(FVector::RightVector);
 
 	StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation();
-	StartLocation.Z -= OutCornerIndex * 10.0f;
-	EndLocation = StartLocation + RightVector * (GetHorizontalAxis() * 60.0f);
+	StartLocation.Z -= OutCornerIndex * OutCornerMoveParams.IndexMultiplierZOffset;
+	EndLocation = StartLocation + RightVector * (GetHorizontalAxis() * OutCornerMoveParams.SideTraceDistance);
 
 	// Trace sphere to check whether there is a wall on right/left side 
-	PerformSphereTraceByChannel(Character->GetWorld(), CheckHitResult, StartLocation, EndLocation, 5.0f, ECC_Visibility, bDrawDebug, 1.f);
+	PerformSphereTraceByChannel(Character->GetWorld(), CheckHitResult, StartLocation, EndLocation, OutCornerMoveParams.SideTraceRadius, ECC_Visibility, OutCornerMoveParams.bDrawDebugSide, 1.f);
 
 	// If no wall was detected, then stop function
 	if (!CheckHitResult.bBlockingHit)
 		return;
 
 	// Loop to get top of the wall
-	for (int32 i = 0; i < 5; i++)
+	for (int32 i = 0; i < OutCornerMoveParams.LoopIterationsNum; i++)
 	{
 		StartLocation = CheckHitResult.ImpactPoint;
-		StartLocation.Z += 5.0f * (i + 1);
+		StartLocation.Z += OutCornerMoveParams.LoopDistanceIncrement * (i + 1);
 
 		EndLocation = StartLocation;
-		EndLocation.Z -= 5.0f * (i + 10);
+		EndLocation.Z -= OutCornerMoveParams.LoopDistanceIncrement * (i + 10);
 
 		// Trace sphere to get top of the wall from front side of the wall
 		// Start gets higher after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), LoopHitResult, StartLocation, EndLocation, 2.5f, ECC_Visibility, bDrawDebug, 0.f);
+		PerformSphereTraceByChannel(Character->GetWorld(), LoopHitResult, StartLocation, EndLocation, OutCornerMoveParams.LoopTraceRadius, ECC_Visibility, OutCornerMoveParams.bDrawDebugLoop, 0.f);
 
 		// If hit result is not penetrated at start, then break the loop
 		if (!LoopHitResult.bStartPenetrating)
 			break;
 
 		// If hit result was always penetrated at start, then stop function
-		if (i == 4)
+		if (i == OutCornerMoveParams.LoopIterationsNum - 1)
 		{
 			StopClimbMovement();
 			return;
@@ -560,9 +560,9 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 	FRotator TargetRelativeRotation = UParkourFunctionLibrary::NormalReverseRotationZ(CheckHitResult.ImpactNormal);
 	FVector ForwardVector = TargetRelativeRotation.RotateVector(FVector::ForwardVector);
 
-	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(44.0f, 7.0f, ClimbStyle);
+	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(OutCornerMoveParams.StyleMultiplierBraced, OutCornerMoveParams.StyleMultiplierFree, ClimbStyle);
 	FVector TargetRelativeLocation = CheckHitResult.ImpactPoint - ForwardVector * StyleMultiplier;
-	TargetRelativeLocation.Z = LoopHitResult.ImpactPoint.Z - 107.0f;
+	TargetRelativeLocation.Z = LoopHitResult.ImpactPoint.Z - OutCornerMoveParams.TargetLocationZOffset;
 
 	// Call CornerMove function with target location and rotation as parameters
 	CornerMove(TargetRelativeLocation, TargetRelativeRotation);
@@ -1143,7 +1143,7 @@ bool UParkourComponent::CheckOutCorner(int32& OutCornerIndex) const
 		FVector ForwardVector = ArrowActor->GetArrowComponent()->GetComponentRotation().RotateVector(FVector::ForwardVector);
 
 		FVector StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation() + RightVector * (GetHorizontalAxis() * 35.0f);
-		StartLocation.Z -= i * 10.0f;
+		StartLocation.Z -= i * 10.0f; // Should be same as FOutCornerMoveParams.IndexMultiplierZOffset
 
 		FVector EndLocation = StartLocation + ForwardVector * 100.0f;
 
