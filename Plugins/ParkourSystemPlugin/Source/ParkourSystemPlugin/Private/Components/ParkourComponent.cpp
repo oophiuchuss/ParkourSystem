@@ -1781,36 +1781,28 @@ void UParkourComponent::FindHopLocation()
 
 	WallHitResult = WallHitTraces[0];
 
-	// Loop that determines closest to character line trace
-	//for (int32 i = 1; i < WallHitTraces.Num(); i++)
-	//{
-	//	float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
-	//	float Distance2 = FVector::Distance(Character->GetActorLocation(), WallHitResult.ImpactPoint);
-	//	if (Distance1 <= Distance2)
-	//		WallHitResult = WallHitTraces[i];
-	//}
-
-	FVector DesiredDirection = FVector::ZeroVector;
+	// Get Desired direction vector to get where to hop should be a priority
+	FVector DesiredDirectionVector = FVector::ZeroVector;
 
 	if (DesireDirectionName.Contains("Right"))
 	{
-		DesiredDirection += Character->GetActorRightVector();
+		DesiredDirectionVector += Character->GetActorRightVector();
 	}
 	else if (DesireDirectionName.Contains("Left"))
 	{
-		DesiredDirection += -Character->GetActorRightVector();
+		DesiredDirectionVector += -Character->GetActorRightVector();
 	}
 
 	if (DesireDirectionName.Contains("Forward"))
 	{
-		DesiredDirection += Character->GetActorUpVector();
+		DesiredDirectionVector += Character->GetActorUpVector();
 	}
 	else if (DesireDirectionName.Contains("Backward"))
 	{
-		DesiredDirection += -Character->GetActorUpVector();
+		DesiredDirectionVector += -Character->GetActorUpVector();
 	}
 
-	DesiredDirection = DesiredDirection.GetSafeNormal();
+	DesiredDirectionVector = DesiredDirectionVector.GetSafeNormal();
 
 	// Variables to keep track of the best trace
 	float BestAlignmentScore = -1.0f;
@@ -1818,17 +1810,14 @@ void UParkourComponent::FindHopLocation()
 
 	for (const FHitResult& HitResult : WallHitTraces)
 	{
-		// Compute the vector from the character to the hit point
 		FVector ToHitPoint = HitResult.ImpactPoint - Character->GetActorLocation();
-
-		// Compute the distance to the character
 		float Distance = ToHitPoint.Size();
 
 		// Compute the alignment score based on the dot product
 		FVector NormalizedToHitPoint = ToHitPoint.GetSafeNormal();
-		float AlignmentScore = FVector::DotProduct(NormalizedToHitPoint, DesiredDirection);
+		float AlignmentScore = FVector::DotProduct(NormalizedToHitPoint, DesiredDirectionVector);
 
-		// Determine if this trace is better
+		// Determine if this trace is better firstдy by alignment and then by distance
 		if (AlignmentScore > BestAlignmentScore || (AlignmentScore == BestAlignmentScore && Distance > BestDistance))
 		{
 			WallHitResult = HitResult;
