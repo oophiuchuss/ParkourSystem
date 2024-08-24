@@ -27,7 +27,6 @@ public class ParkourSystemPlugin : ModuleRules
                 Path.Combine(ModuleDirectory, "Private/Actors"),
                 Path.Combine(ModuleDirectory, "Private/AnimationNotifies"),
                 Path.Combine(ModuleDirectory, "Private/Components"),
-                Path.Combine(ModuleDirectory, "Private/DataAssets"),
                 Path.Combine(ModuleDirectory, "Private/FunctionLibraries"),
                 Path.Combine(ModuleDirectory, "Private/Interfaces")
             }

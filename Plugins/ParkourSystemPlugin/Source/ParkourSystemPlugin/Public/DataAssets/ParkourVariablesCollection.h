@@ -4,7 +4,10 @@
 #include "CoreMinimal.h"
 #include "ParkourVariablesCollection.generated.h"
 
-
+/**
+ * FParkourVariablesCollection is struct that contains all needed Data Assests for parkour component.
+ * This struct allows easy access to all DTs and gives an ability to easily modify data
+ */
 USTRUCT(BlueprintType)
 struct FParkourVariablesCollection
 {
