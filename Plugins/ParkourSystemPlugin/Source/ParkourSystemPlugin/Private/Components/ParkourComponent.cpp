@@ -1762,10 +1762,13 @@ void UParkourComponent::FindHopLocation()
 		}
 	}
 
+	FString DesireDirectionName = GetClimbDesireRotation().GetTagName().ToString();
+
+
 	// If none of the traces were recorded than there could be a corner
 	if (WallHitTraces.Num() <= 0)
 	{
-		if (GetClimbDesireRotation().GetTagName().IsEqual("Parkour.Direction.Backward"))
+		if (DesireDirectionName.Equals("Parkour.Direction.Backward"))
 			ParkourDrop();
 		else if (bool bIsOutCorner = CheckOutCornerHop() || CheckInCornerHop())
 		{
@@ -1779,12 +1782,59 @@ void UParkourComponent::FindHopLocation()
 	WallHitResult = WallHitTraces[0];
 
 	// Loop that determines closest to character line trace
-	for (int32 i = 1; i < WallHitTraces.Num(); i++)
+	//for (int32 i = 1; i < WallHitTraces.Num(); i++)
+	//{
+	//	float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
+	//	float Distance2 = FVector::Distance(Character->GetActorLocation(), WallHitResult.ImpactPoint);
+	//	if (Distance1 <= Distance2)
+	//		WallHitResult = WallHitTraces[i];
+	//}
+
+	FVector DesiredDirection = FVector::ZeroVector;
+
+	if (DesireDirectionName.Contains("Right"))
 	{
-		float Distance1 = FVector::Distance(Character->GetActorLocation(), WallHitTraces[i].ImpactPoint);
-		float Distance2 = FVector::Distance(Character->GetActorLocation(), WallHitResult.ImpactPoint);
-		if (Distance1 <= Distance2)
-			WallHitResult = WallHitTraces[i];
+		DesiredDirection += Character->GetActorRightVector();
+	}
+	else if (DesireDirectionName.Contains("Left"))
+	{
+		DesiredDirection += -Character->GetActorRightVector();
+	}
+
+	if (DesireDirectionName.Contains("Forward"))
+	{
+		DesiredDirection += Character->GetActorUpVector();
+	}
+	else if (DesireDirectionName.Contains("Backward"))
+	{
+		DesiredDirection += -Character->GetActorUpVector();
+	}
+
+	DesiredDirection = DesiredDirection.GetSafeNormal();
+
+	// Variables to keep track of the best trace
+	float BestAlignmentScore = -1.0f;
+	float BestDistance = -1.0f;
+
+	for (const FHitResult& HitResult : WallHitTraces)
+	{
+		// Compute the vector from the character to the hit point
+		FVector ToHitPoint = HitResult.ImpactPoint - Character->GetActorLocation();
+
+		// Compute the distance to the character
+		float Distance = ToHitPoint.Size();
+
+		// Compute the alignment score based on the dot product
+		FVector NormalizedToHitPoint = ToHitPoint.GetSafeNormal();
+		float AlignmentScore = FVector::DotProduct(NormalizedToHitPoint, DesiredDirection);
+
+		// Determine if this trace is better
+		if (AlignmentScore > BestAlignmentScore || (AlignmentScore == BestAlignmentScore && Distance > BestDistance))
+		{
+			WallHitResult = HitResult;
+			BestAlignmentScore = AlignmentScore;
+			BestDistance = Distance;
+		}
 	}
 
 	// Check whether hit result is valid
@@ -2889,8 +2939,9 @@ void UParkourComponent::ResetFootIK(bool bIsLeft)
 
 void UParkourComponent::PlayParkourMontage()
 {
+	// Check whether parkour data asset was loaded corectly
 	checkf(ParkourVariables != nullptr, TEXT("ParkourVariables are not initialized for \"%s\" action"), *ParkourActionTag.GetTagName().ToString());
-	
+
 	SetParkourState(ParkourVariables->ParkourInState);
 
 	// FirstTopResultOffset used for any edge interaction (like reach ledge, climb on the ledge, hop on the ledge, etc.)
@@ -2963,6 +3014,8 @@ void UParkourComponent::FindMontageStartTime()
 
 void UParkourComponent::PreinitializeParkourDataAssets(FParkourVariablesCollection& ParkourCollection) const
 {
+	// Preset all parkour data assets
+
 	static ConstructorHelpers::FObjectFinder<UParkourVariables> BracedClimbDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_BracedClimb"));
 	ParkourCollection.BracedClimbDT = BracedClimbDTObj.Object;
 
