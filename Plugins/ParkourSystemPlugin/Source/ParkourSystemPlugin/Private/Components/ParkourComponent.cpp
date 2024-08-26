@@ -201,7 +201,7 @@ void UParkourComponent::AutoClimb()
 
 	// Trace box to check whether character is on ground 
 	FHitResult HitResult;
-	PerformBoxTraceByChannel(Character->GetWorld(), HitResult, Location, Location, GeneralParams.AutoClimbBoxExtend, ECC_Visibility, bDrawDebug, 0.0f);
+	PerformBoxTraceByChannel(Character->GetWorld(), HitResult, Location, Location, GeneralParams.AutoClimbBoxExtend, ECC_Visibility, GeneralParams.bDrawAutoClimbBox, 0.0f);
 	bOnGround = (HitResult.bBlockingHit || HitResult.bStartPenetrating);
 
 	// Determine character`s ability to manually climb and auto-climb 
@@ -1398,7 +1398,7 @@ void UParkourComponent::PerformSphereTraceByChannel(UWorld* World, FHitResult& H
 	FCollisionQueryParams TraceParams(FName(TEXT("SphereTrace")));
 	World->SweepSingleByChannel(HitResult, StartLocation, EndLocation, FQuat::Identity, TraceChannel, FCollisionShape::MakeSphere(Radius), TraceParams);
 
-	if (bDrawDebugSphere)
+	if (bDrawDebug || bDrawDebugSphere)
 	{
 
 		// Draw sphere at the start of the trace and where it hits if it is
@@ -1423,7 +1423,7 @@ void UParkourComponent::PerformBoxTraceByChannel(UWorld* World, FHitResult& HitR
 	FCollisionQueryParams TraceParams(FName(TEXT("BoxTrace")));
 	World->SweepSingleByChannel(HitResult, StartLocation, EndLocation, FQuat::Identity, CollisionChannel, FCollisionShape::MakeBox(BoxHalfExtend), TraceParams);
 
-	if (bDrawDebugBox)
+	if (bDrawDebug || bDrawDebugBox)
 	{
 		// Draw box at the start of the trace or where it hits if it is
 		if (HitResult.bBlockingHit)
@@ -1445,7 +1445,7 @@ void UParkourComponent::PerformCapsuleTraceByChannel(UWorld* World, FHitResult& 
 	FCollisionQueryParams TraceParams(FName(TEXT("CapsuleTrace")));
 	World->SweepSingleByChannel(HitResult, StartLocation, EndLocation, FQuat::Identity, CollisionChannel, FCollisionShape::MakeCapsule(Radius, HalfHeight), TraceParams);
 
-	if (bDrawDebugCapsule)
+	if (bDrawDebug || bDrawDebugCapsule)
 	{
 		// Draw capsule at the start of the trace and where it hits if it is
 		if (HitResult.bBlockingHit)
@@ -1468,7 +1468,7 @@ void UParkourComponent::PerformLineTraceByChannel(UWorld* World, FHitResult& Hit
 
 	World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, CollisionChannel);
 
-	if (bDrawDebugLine)
+	if (bDrawDebug || bDrawDebugLine)
 	{
 		// Draw line at the start of the trace or if it hits something draw it with point
 		if (HitResult.bBlockingHit)

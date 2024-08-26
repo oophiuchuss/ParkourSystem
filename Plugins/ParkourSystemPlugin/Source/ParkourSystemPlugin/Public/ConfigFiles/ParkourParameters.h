@@ -29,6 +29,9 @@ struct FGeneralParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Box extend for asuto climb check."))
 	FVector AutoClimbBoxExtend = FVector(10.0f, 10.0f, 4.0f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether to draw debug information for the auto climb box trace."))
+	bool bDrawAutoClimbBox = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Delay that blocks manual climb after drop."))
 	float ManualClimbDropDelay = 0.3f;
 
