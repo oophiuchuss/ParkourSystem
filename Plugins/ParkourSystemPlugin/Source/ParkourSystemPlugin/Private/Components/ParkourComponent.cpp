@@ -51,6 +51,7 @@ UParkourComponent::UParkourComponent()
 	bCanManualClimb = true;
 	bDrawDebug = false;
 	bOnGround = true;
+	bShouldHandleCameraInput = true;
 
 	PreinitializeParkourDataAssets(ParkourVariablesCollection);
 }
@@ -262,6 +263,9 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 	if (Character->GetController() == nullptr)
 		return;
 
+	if (ForwardScale != MovementVector.Y || RightScale != MovementVector.X)
+		bShouldHandleCameraInput = true;
+
 	ForwardScale = MovementVector.Y;
 	RightScale = MovementVector.X;
 
@@ -285,6 +289,8 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 	}
 	else if (ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 	{
+		bShouldHandleCameraInput = false;
+
 		// Check whether character is playing any montages
 		if (AnimInstance->IsAnyMontagePlaying())
 			StopClimbMovement();
@@ -726,6 +732,7 @@ void UParkourComponent::ResetMovement()
 	ForwardScale = 0.0f;
 	RightScale = 0.0f;
 	SetClimbDirection(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Direction.NoDirection")));
+	bShouldHandleCameraInput = true;
 }
 
 void UParkourComponent::ChekcWallShape()
@@ -1894,6 +1901,8 @@ void UParkourComponent::FindHopLocation()
 
 void UParkourComponent::GetClimbForwardValue(float ScaleValue, float& HorizontalForwardValue, float& VerticalForwardValue) const
 {
+	if (!bShouldHandleCameraInput)
+		return;
 	FRotator DeltaRotation = Character->GetControlRotation() - Character->GetActorRotation();
 	DeltaRotation.Normalize();
 	HorizontalForwardValue = ScaleValue * UKismetMathLibrary::DegSin(DeltaRotation.Yaw);
@@ -1902,6 +1911,8 @@ void UParkourComponent::GetClimbForwardValue(float ScaleValue, float& Horizontal
 
 void UParkourComponent::GetClimbRightValue(float ScaleValue, float& HorizontalRightValue, float& VerticalRightValue) const
 {
+	if (!bShouldHandleCameraInput)
+		return;
 	FRotator DeltaRotation = Character->GetControlRotation() - Character->GetActorRotation();
 	DeltaRotation.Normalize();
 	HorizontalRightValue = ScaleValue * UKismetMathLibrary::DegCos(0.0f - DeltaRotation.Yaw);

@@ -541,4 +541,6 @@ private:
 	FTimerHandle TimerHandle_DelayedFunction;
 	FTimerHandle TimerHandle_FinishCameraTimeline;
 	FTimerHandle TimerHandle_TickCameraTimeline;
+
+	bool bShouldHandleCameraInput;
 };
