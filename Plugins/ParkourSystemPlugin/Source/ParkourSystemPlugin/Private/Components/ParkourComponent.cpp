@@ -2371,6 +2371,9 @@ void UParkourComponent::SetClimbDirection(const FGameplayTag& NewClimbDirection)
 
 	IParkourABPInterface* ParkourABPInterface = Cast<IParkourABPInterface>(AnimInstance);
 	ParkourABPInterface->Execute_SetClimbMovement(AnimInstance, ClimbDirection);
+
+	IParkourStatsInterface* ParkourStatsInterface = Cast<IParkourStatsInterface>(WidgetActor->WidgetComponent->GetWidget());
+	ParkourStatsInterface->Execute_SetClimbDirection(WidgetActor->WidgetComponent->GetWidget(), ClimbDirection.GetTagName().ToString());
 }
 
 void UParkourComponent::SetUpParkourSettings(ECollisionEnabled::Type CollsionType, EMovementMode MovementMode, FRotator RotationRate, bool bDoCollisionTest, bool bStopImmediately)
@@ -2387,6 +2390,8 @@ void UParkourComponent::SetUpParkourSettings(ECollisionEnabled::Type CollsionTyp
 FGameplayTag UParkourComponent::SelectHopAction()
 {
 	FGameplayTag ForwardHopMovementTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopUp"));
+	
+	SetClimbDirection(GetHopDirection());
 
 	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
 	{
@@ -2406,7 +2411,7 @@ FGameplayTag UParkourComponent::SelectHopAction()
 			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopLeft")),
 			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRightUp")),
 			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopRight")),
-			GetHopDirection());
+			ClimbDirection);
 	}
 	else
 	{
@@ -2426,7 +2431,7 @@ FGameplayTag UParkourComponent::SelectHopAction()
 			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopLeft")),
 			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
 			UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.FreeClimbHopRight")),
-			GetHopDirection());
+			ClimbDirection);
 	}
 
 }

@@ -29,4 +29,8 @@ public:
     // Sets the current climb style.
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ParkourSystem")
     bool SetClimbStyle(const FString& ClimbStyle);
+
+    // Sets the current climb direction.
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ParkourSystem")
+    bool SetClimbDirection(const FString& ClimbDirection);
 };
