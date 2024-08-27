@@ -329,6 +329,9 @@ struct FCheckWallShapeParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Number of iterations for row checks during climbing."))
 	int32 NumOfRowIterationsClimb = 6;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Number of iterations for row checks while falling."))
+	int32 NumOfRowIterationsFalling = 20;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Z-axis offset increment for each step of row checks."))
 	float RowZOffsetStep = 8.0f;
 

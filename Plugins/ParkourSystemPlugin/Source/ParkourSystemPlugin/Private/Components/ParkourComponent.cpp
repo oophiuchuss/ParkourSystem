@@ -812,8 +812,13 @@ void UParkourComponent::ChekcWallShape()
 		HopHitTraces.Add(LoopTraceHitResult);
 
 		// If character is climbing make less iterations (rows)
-		int InnerIndex = UParkourFunctionLibrary::SelectParkourStateFloat(CheckWallShapeParams.NumOfRowIterationsDefault, 0, 0, CheckWallShapeParams.NumOfRowIterationsClimb, ParkourStateTag);
+		int InnerIndex;
 
+		if (CharacterMovement->IsFalling())
+			InnerIndex = CheckWallShapeParams.NumOfRowIterationsFalling;
+		else
+			InnerIndex = UParkourFunctionLibrary::SelectParkourStateFloat(CheckWallShapeParams.NumOfRowIterationsDefault, 0, 0, CheckWallShapeParams.NumOfRowIterationsClimb, ParkourStateTag);
+		
 		// Loop that traces each row line for one column
 		for (int32 k = 0; k <= InnerIndex; k++)
 		{
@@ -2107,6 +2112,14 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 	if (WallHeight < ParkourTypeParams.WallHeightMax)
 	{
 		CheckAirHangOrClimb();
+	}
+	else
+	{
+		SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.NoAction")));
+		if (!bAutoClimb)
+		{
+			Character->Jump();
+		}
 	}
 }
 
