@@ -50,6 +50,25 @@ struct FGeneralParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Speed multiplier for free hang climb move."))
 	float FreeHangMoveSpeedMultiplier = 0.08f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = ""))
+	float ArrowLocationX = 0.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = ""))
+	float ArrowLocationZ = 195.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = ""))
+	float CharacterHeightDiff = 0.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = ""))
+	float CharacterHandUp = 0.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = ""))
+	float CharacterHandFront = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = ""))
+	float ClimbHandSpace = 20.0f;
+	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Whether character should drop down on backward hop move, if there is no space to hop."))
 	bool bShouldDropOnBackwardHop = false;
 };

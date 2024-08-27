@@ -482,16 +482,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UParkourVariables> ParkourVariables;
 
-	float ArrowLocationX;
-	float ArrowLocationZ;
-	float CharacterHeightDiff;
-	float CharacterHandUp;
-	float CharacterHandFront;
-	float FirstCameraTargetArmLenght;
-	float TargetArmLength;
-	float ForwardScale;
-	float RightScale;
-
 	FGameplayTag ParkourActionTag;
 	FGameplayTag ParkourStateTag;
 	FGameplayTag ClimbStyle;
@@ -500,6 +490,7 @@ private:
 	bool bCanAutoClimb;
 	bool bCanManualClimb;
 	bool bOnGround;
+	bool bShouldHandleCameraInput;
 
 	float WallHeight;
 	float WallDepth;
@@ -513,7 +504,11 @@ private:
 	float HorizontalClimbRightValue;
 	float VerticalClimbRightValue;
 
-	float ClimbHandSpace;
+	float FirstCameraTargetArmLenght;
+	float TargetArmLength;
+	float ForwardScale;
+	float RightScale;
+
 	float VerticalHopDistance;
 	float HorizontalHopDistance;
 
@@ -542,5 +537,4 @@ private:
 	FTimerHandle TimerHandle_FinishCameraTimeline;
 	FTimerHandle TimerHandle_TickCameraTimeline;
 
-	bool bShouldHandleCameraInput;
 };

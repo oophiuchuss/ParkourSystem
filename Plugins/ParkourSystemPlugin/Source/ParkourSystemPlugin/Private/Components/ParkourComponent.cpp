@@ -46,7 +46,6 @@ UParkourComponent::UParkourComponent()
 	ClimbDirection = NoDirectionTag;
 
 	// Set up all default variables
-	ClimbHandSpace = 20.0f;
 	bCanAutoClimb = true;
 	bCanManualClimb = true;
 	bDrawDebug = false;
@@ -117,10 +116,7 @@ bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpring
 			);
 			ArrowActor->AttachToComponent(CharacterMesh, AttachmentRules);
 
-			ArrowLocationX = 0.0f;
-			ArrowLocationZ = 195.0f;
-			CharacterHeightDiff = 0.0f;
-			ArrowActor->SetActorRelativeLocation(FVector(ArrowLocationX, 0.0f, ArrowLocationZ - CharacterHeightDiff));
+			ArrowActor->SetActorRelativeLocation(FVector(GeneralParams.ArrowLocationX, 0.0f, GeneralParams.ArrowLocationZ - GeneralParams.CharacterHeightDiff));
 		}
 		else
 			return false;
@@ -457,7 +453,7 @@ void UParkourComponent::ClimbMove()
 
 	// Claculate target Z vector based on wall top point, character height diff and style subtracted value
 	float StyleSub = UParkourFunctionLibrary::SelectClimbStyleFloat(ClimbMoveParams.ZStyleBraced, ClimbMoveParams.ZStyleFree, ClimbStyle);
-	float TargetInterpZ = InnerLoopHitResult.ImpactPoint.Z + CharacterHeightDiff - StyleSub;
+	float TargetInterpZ = InnerLoopHitResult.ImpactPoint.Z + GeneralParams.CharacterHeightDiff - StyleSub;
 
 	// Interpolate character old position to new one with use of move speed
 	float DeltaSeconds = Character->GetWorld()->GetDeltaSeconds();
@@ -1017,7 +1013,7 @@ float UParkourComponent::FirstTraceHeight() const
 		float RightHandZLocation = CharacterMesh->GetSocketLocation(FirstTraceHeightParams.RightHandSocketName).Z;
 		float LeftHandZLocation = CharacterMesh->GetSocketLocation(FirstTraceHeightParams.LeftHandSocketName).Z;
 		StartLocation.Z = RightHandZLocation < LeftHandZLocation ? LeftHandZLocation : RightHandZLocation;
-		StartLocation.Z -= CharacterHeightDiff - CharacterHandUp;
+		StartLocation.Z -= GeneralParams.CharacterHeightDiff - GeneralParams.CharacterHandUp;
 		StartLocation -= Character->GetActorForwardVector() * FirstTraceHeightParams.OuterForwardOffset;
 
 		FVector EndLocation = StartLocation + Character->GetActorForwardVector() * FirstTraceHeightParams.OuterForwardCheckDistance * (i + 1);
@@ -1297,7 +1293,7 @@ bool UParkourComponent::CheckInCorner()
 	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(CheckInCornerParams.TargetForwardMultiplierBraced, CheckInCornerParams.TargetForwardMultiplierFreeHang, ClimbStyle);
 	FVector TargetRelativeLocation = HitResult.ImpactPoint - ForwardVector * StyleMultiplier;
 	TargetRelativeLocation.Z = LocalTopResult.ImpactPoint.Z;
-	TargetRelativeLocation.Z += CharacterHeightDiff - UParkourFunctionLibrary::SelectClimbStyleFloat(CheckInCornerParams.TargetZOffsetBraced, CheckInCornerParams.TargetZOffsetFreeHang, ClimbStyle);
+	TargetRelativeLocation.Z += GeneralParams.CharacterHeightDiff - UParkourFunctionLibrary::SelectClimbStyleFloat(CheckInCornerParams.TargetZOffsetBraced, CheckInCornerParams.TargetZOffsetFreeHang, ClimbStyle);
 
 	CornerMove(TargetRelativeLocation, WallRotation);
 
@@ -1728,7 +1724,7 @@ void UParkourComponent::FindHopLocation()
 	float HorizontalDistanceStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(FindHopLocationParams.HorizontalOffsetMultiplierBraced, FindHopLocationParams.HorizontalOffsetMultiplierFree, ClimbStyle);
 
 	VerticalHopDistance = FindHopLocationParams.VerticalOffsetMultiplier * VerticalDirectionMultiplier;
-	HorizontalHopDistance = HorizontalDistanceStyle /* 4*/ * HorizontalDirectionMultiplier;
+	HorizontalHopDistance = HorizontalDistanceStyle * HorizontalDirectionMultiplier;
 
 	WallHitTraces.Empty();
 
@@ -2677,9 +2673,9 @@ void UParkourComponent::SetHandIK(const FHitResult& FirstHitResult, const FHitRe
 	FVector HandLedgeLocation;
 	if (!bIsFinal)
 	{
-		float StyleMultiplier = ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced") ? CharacterHandFront : 0.0f;
+		float StyleMultiplier = ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced") ? GeneralParams.CharacterHandFront : 0.0f;
 		HandLedgeLocation = FirstHitResult.ImpactPoint + ForwardVector * (-SetHandIKParams.ForwardOffset + StyleMultiplier);
-		HandLedgeLocation.Z = SecondHitResult.ImpactPoint.Z + CharacterHeightDiff + CharacterHandUp - SetHandIKParams.ZOffset;
+		HandLedgeLocation.Z = SecondHitResult.ImpactPoint.Z + GeneralParams.CharacterHeightDiff + GeneralParams.CharacterHandUp - SetHandIKParams.ZOffset;
 	}
 	else
 	{
@@ -2742,7 +2738,7 @@ void UParkourComponent::SetFootIK(FHitResult& LedgeResult, bool bIsLeft, bool bI
 		FVector RightVector = WallRotation.RotateVector(FVector::RightVector);
 
 		FVector StartLocation = LedgeResult.ImpactPoint - (ForwardVector * SetFootIKParams.ForwardOffset) - (RightVector * SetFootIKParams.RightOffset) * RightOffsetMultiplier;
-		StartLocation.Z += i * SetFootIKParams.ZOffsetStep + (CharacterHeightDiff - SetFootIKParams.InitialZOffset);
+		StartLocation.Z += i * SetFootIKParams.ZOffsetStep + (GeneralParams.CharacterHeightDiff - SetFootIKParams.InitialZOffset);
 		FVector EndLocation = StartLocation + (ForwardVector * SetFootIKParams.ForwardCheckDistance);
 
 		// Trace to get foot location on the wall
@@ -2811,8 +2807,8 @@ void UParkourComponent::UpdateClimbMoveHandIK(bool bIsLeft)
 	// Loop to get front side of the wall edge in front of a hand
 	for (int32 i = 0; i < UpdateClimbMoveHandIKParams.FrontNumOfIterations; i++)
 	{
-		FVector InitialVector = CharacterMesh->GetSocketLocation(HandSocketName) + Character->GetActorRightVector() * (i * UpdateClimbMoveHandIKParams.FrontRightOffsetStep + ClimbHandSpace) * RightOffsetMultiplier;
-		InitialVector.Z -= CharacterHeightDiff;
+		FVector InitialVector = CharacterMesh->GetSocketLocation(HandSocketName) + Character->GetActorRightVector() * (i * UpdateClimbMoveHandIKParams.FrontRightOffsetStep + GeneralParams.ClimbHandSpace) * RightOffsetMultiplier;
+		InitialVector.Z -= GeneralParams.CharacterHeightDiff;
 
 		FVector StartLocation = InitialVector - Character->GetActorForwardVector() * UpdateClimbMoveHandIKParams.FrontForwardOffset;
 		FVector EndLocation = StartLocation + Character->GetActorForwardVector() * UpdateClimbMoveHandIKParams.FrontForwardCheckDistance;
@@ -2864,8 +2860,8 @@ void UParkourComponent::UpdateClimbMoveHandIK(bool bIsLeft)
 	FRotator XRotation = FRotationMatrix::MakeFromX(FirstHitResult.ImpactNormal).Rotator();
 	FVector ForwardVector = XRotation.RotateVector(FVector::ForwardVector);
 
-	FVector HandLocation = FirstHitResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(CharacterHandFront, 0.0f, ClimbStyle) - UpdateClimbMoveHandIKParams.ResultForwardOffset);
-	HandLocation.Z = SecondHitResult.ImpactPoint.Z + CharacterHeightDiff + CharacterHandUp + GetClimbLeftHandZOffset();
+	FVector HandLocation = FirstHitResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(GeneralParams.CharacterHandFront, 0.0f, ClimbStyle) - UpdateClimbMoveHandIKParams.ResultForwardOffset);
+	HandLocation.Z = SecondHitResult.ImpactPoint.Z + GeneralParams.CharacterHeightDiff + GeneralParams.CharacterHandUp + GetClimbLeftHandZOffset();
 	HandLocation.Z -= UParkourFunctionLibrary::SelectClimbStyleFloat(UpdateClimbMoveHandIKParams.ResultZOffsetBraced, UpdateClimbMoveHandIKParams.ResultZOffsetFree, ClimbStyle);
 
 	FRotator HandRotation = FRotationMatrix::MakeFromX(FirstHitResult.ImpactNormal).Rotator();
