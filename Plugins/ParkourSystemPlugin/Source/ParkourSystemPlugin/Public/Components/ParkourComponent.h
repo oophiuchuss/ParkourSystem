@@ -70,7 +70,7 @@ public:
 	FCornerHopParams CornerHopParams;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
-	FChekcWallShapeParams ChekcWallShapeParams;
+	FCheckWallShapeParams CheckWallShapeParams;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourSystem|Parameters")
 	FCheckMantleSurfaceParams CheckMantleSurfaceParams;
@@ -279,33 +279,6 @@ private:
 	// Performs hop action out of a corner.
 	bool CheckOutCornerHop();
 
-	////////////////////////////////////////////////////////////////////
-	//
-	//	TRACING OPERATIONS
-	//
-	////////////////////////////////////////////////////////////////////
-
-	// Performs a sphere trace by channel.
-	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime = 0.5f) const;
-
-	// Performs a box trace by channel.
-	void PerformBoxTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		const FVector& BoxHalfExtent, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime = 0.5f) const;
-
-	// Performs a capsule trace by channel.
-	void PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime = 0.5f) const;
-
-	// Performs a line trace by channel.
-	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
-		ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime = 0.5f) const;
-
-	// Displays hit results for debugging.
-	void ShowHitResults();
-
-	// Resets the results of parkour traces.
-	void ResetParkourResults();
 
 	////////////////////////////////////////////////////////////////////
 	//
@@ -449,6 +422,34 @@ private:
 	void FindMontageStartTime();
 
 	void PreinitializeParkourDataAssets(FParkourVariablesCollection& ParkourCollection) const;
+
+	////////////////////////////////////////////////////////////////////
+	//
+	//	TRACING OPERATIONS
+	//
+	////////////////////////////////////////////////////////////////////
+
+	// Performs a sphere trace by channel.
+	void PerformSphereTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		float Radius, ECollisionChannel TraceChannel, bool bDrawDebugSphere, float DrawTime = 0.5f) const;
+
+	// Performs a box trace by channel.
+	void PerformBoxTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		const FVector& BoxHalfExtent, ECollisionChannel CollisionChannel, bool bDrawDebugBox, float DrawTime = 0.5f) const;
+
+	// Performs a capsule trace by channel.
+	void PerformCapsuleTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		float HalfHeight, float Radius, ECollisionChannel CollisionChannel, bool bDrawDebugCapsule, float DrawTime = 0.5f) const;
+
+	// Performs a line trace by channel.
+	void PerformLineTraceByChannel(UWorld* World, FHitResult& HitResult, const FVector& StartLocation, const FVector& EndLocation,
+		ECollisionChannel CollisionChannel, bool bDrawDebugLine, float DrawTime = 0.5f) const;
+
+	// Displays hit results for debugging.
+	void ShowHitResults();
+
+	// Resets the results of parkour traces.
+	void ResetParkourResults();
 
 	////////////////////////////////////////////////////////////////////
 	//

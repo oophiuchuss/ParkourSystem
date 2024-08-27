@@ -152,6 +152,9 @@ struct FOutCornerMoveParams
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Forward offset for corner checks, used for adjustment free hang style."))
+	float ArrowForwardOffsetStyleFree = 35.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Z-axis offset for corner checks, multiplied by the index during each iteration."))
 	float IndexMultiplierZOffset = 10.0f;
 
@@ -265,7 +268,7 @@ struct FCornerHopParams
 };
 
 USTRUCT(BlueprintType)
-struct FChekcWallShapeParams
+struct FCheckWallShapeParams
 {
 	GENERATED_BODY()
 
@@ -551,6 +554,9 @@ struct FCheckOutCornerParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Initial index for the outer corner check loop."))
 	int32 StartIndex = -2;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Offset to the forward for adjusting the start location of the outer corner check."))
+	float InitialForwardOffset = 5.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Offset to the right for adjusting the start location of the outer corner check."))
 	float RightOffset = 35.0f;
 
@@ -805,7 +811,7 @@ struct FFindHopLocationParams
 	float VerticalForward = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Vertical backward offset for hop location calculations."))
-	float VerticalBackward = -7.5f;
+	float VerticalBackward = -9.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Vertical side offset for hop location calculations."))
 	float VerticalSide = -2.5f;
@@ -814,7 +820,7 @@ struct FFindHopLocationParams
 	float VerticalForwardSide = -1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Vertical backward side offset for hop location calculations."))
-	float VerticalBackwardSide = -4.0f;
+	float VerticalBackwardSide = -7.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Horizontal side offset for hop location calculations."))
 	float HorizontalSide = 1.0f;
@@ -825,11 +831,17 @@ struct FFindHopLocationParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Multiplier for vertical offset adjustments in hop location calculations."))
 	float VerticalOffsetMultiplier = 25.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Multiplier for horizontal offset adjustments in hop location calculations."))
-	float HorizontalOffsetMultiplier = 140.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Multiplier for horizontal offset adjustments in hop location calculations for braced style."))
+	float HorizontalOffsetMultiplierBraced = 140.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Multiplier for horizontal offset adjustments in hop location calculations for free hang style."))
+	float HorizontalOffsetMultiplierFree = 80.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Number of iterations for checking columns in hop location calculations."))
-	int32 ColumnNumOfIterations = 7;
+	int32 ColumnNumOfIterationsBraced = 7;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Number of iterations for checking columns in hop location calculations."))
+	int32 ColumnNumOfIterationsFree = 4;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Step size for adjusting right offset in column checks during hop location calculations."))
 	float ColumnRightOffsetStep = 20.0f;
@@ -863,9 +875,6 @@ struct FFindHopLocationParams
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Right offset for capsule checks during hop location calculations."))
 	float CapsuleRightOffset = 4.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Distance to check right for capsule checks during hop location calculations."))
-	float CapsuleRightCheckDistance = 8.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Tooltip = "Radius of the capsule used in hop location calculations."))
 	float CapsuleRadius = 25.0f;
