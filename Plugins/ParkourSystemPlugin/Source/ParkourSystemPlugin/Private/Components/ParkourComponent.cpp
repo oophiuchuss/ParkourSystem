@@ -1212,7 +1212,7 @@ bool UParkourComponent::CheckInCorner()
 
 		// Trace sphere that checks whether there is a wall from LocalCornerDepth point
 		// Trace gets lower after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckInCornerParams.SideSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugSide);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckInCornerParams.SideSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugSide, 0.0f);
 
 		if (HitResult.bBlockingHit)
 			break;
@@ -1239,10 +1239,17 @@ bool UParkourComponent::CheckInCorner()
 		// Trace sphere that pokes at top side of the wall at "corner" location
 		// Start gets higher after each iteration
 		// End gets lower after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), LocalTopResult, StartLocation, EndLocation, CheckInCornerParams.TopSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugTop);
+		PerformSphereTraceByChannel(Character->GetWorld(), LocalTopResult, StartLocation, EndLocation, CheckInCornerParams.TopSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugTop, 0.0f);
 
 		//If trace wasn't blocked by anything than corner is not valid  
 		if (!LocalTopResult.bBlockingHit)
+		{
+			StopClimbMovement();
+			return false;
+		}
+		
+		//If trace was penetrating something on start and it is last iteration than corner is not valid  
+		if (LocalTopResult.bStartPenetrating && i == CheckInCornerParams.TopNumOfIterations - 1)
 		{
 			StopClimbMovement();
 			return false;
@@ -2063,7 +2070,7 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 				return;
 			}
 
-			if (WallHeight > ParkourTypeParams.WallHeightLevel3  && VaultHeight <= ParkourTypeParams.VaultHeightLevel2)
+			if (WallHeight > ParkourTypeParams.WallHeightLevel3 && VaultHeight <= ParkourTypeParams.VaultHeightLevel2)
 			{
 				if (CheckVaultSurface())
 					SetParkourAction(UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.HighVault")));
@@ -2621,9 +2628,6 @@ void UParkourComponent::HandLedgeIK(FHitResult& LedgeResult, bool bIsLeft)
 		if (bShouldBreak)
 			break;
 	}
-
-	//TODO fix when hand could not find location
-	//solution copy another hand location
 }
 
 void UParkourComponent::SetHandIK(const FHitResult& FirstHitResult, const FHitResult& SecondHitResult, bool bIsLeft, bool bIsFinal)
