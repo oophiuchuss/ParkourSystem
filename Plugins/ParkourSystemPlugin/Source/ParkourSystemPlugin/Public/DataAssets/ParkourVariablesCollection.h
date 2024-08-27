@@ -14,48 +14,48 @@ struct FParkourVariablesCollection
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> BracedClimbDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> BracedClimbUpDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> BracedDropDownDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> ClimbHopDownDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> ClimbHopLeftDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> ClimbHopLeftUpDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> ClimbHopRightDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> ClimbHopRightUpDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> ClimbHopUpDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FallingBracedClimbDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FallingFreeHangClimbDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FreeClimbHopDownDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FreeClimbHopLeftDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FreeClimbHopRightDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FreeHangClimbUpDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FreeHangDropDownDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> FreeHangDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> HighVaultDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> LowMantleDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> MantleDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> ThinVaultDT;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ParkourActionDataAssets")
 	TObjectPtr<UParkourVariables> VaultDT;
 };
