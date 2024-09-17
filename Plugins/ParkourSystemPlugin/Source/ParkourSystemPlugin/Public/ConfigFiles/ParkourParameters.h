@@ -4,7 +4,7 @@
 #include "CoreMinimal.h"
 #include "ParkourParameters.generated.h"
 
-// How naing works for default floats?
+// How naming works for default floats?
 // First part is what segment of a check parameter is. For example, TopZOffsetStep - Top means that the check is doint Top of the wall
 // It could be Top for top of the wall check, Side for checking alongside of the wall, Bottom for checking what is under, Column for line traces that represents columns and row in the same manner
 // 

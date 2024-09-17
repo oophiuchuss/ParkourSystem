@@ -158,7 +158,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	// Initializes references for character, camera, and motion warping components.
-	virtual bool SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera) override;
+	virtual bool SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom,
+		UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera) override;
 
 	// Handler for parkour montage blend-out event.
 	UFUNCTION()

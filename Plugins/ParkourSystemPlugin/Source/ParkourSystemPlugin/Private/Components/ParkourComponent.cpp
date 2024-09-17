@@ -74,7 +74,8 @@ void UParkourComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	ClimbMoveIK();
 }
 
-bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom, UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera)
+bool UParkourComponent::SetInitializeReference(ACharacter* NewCharacter, USpringArmComponent* NewCameraBoom,
+	UMotionWarpingComponent* NewMotionWarping, UCameraComponent* NewCamera)
 {
 	// Initialize all character related references
 	Character = NewCharacter;
@@ -167,6 +168,7 @@ void UParkourComponent::ParkourAction()
 
 void UParkourComponent::ParkourActionFunction(bool bAutoClimb)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::ParkourActionFunction);
 	// Check is character currently doing anything
 	if (!ParkourActionTag.GetTagName().IsEqual("Parkour.Action.NoAction"))
 		return;
@@ -198,7 +200,9 @@ void UParkourComponent::AutoClimb()
 
 	// Trace box to check whether character is on ground 
 	FHitResult HitResult;
-	PerformBoxTraceByChannel(Character->GetWorld(), HitResult, Location, Location, GeneralParams.AutoClimbBoxExtend, ECC_Visibility, GeneralParams.bDrawAutoClimbBox, 0.0f);
+	PerformBoxTraceByChannel(Character->GetWorld(), HitResult, Location, Location,
+		GeneralParams.AutoClimbBoxExtend, ECC_Visibility, GeneralParams.bDrawAutoClimbBox, 0.0f);
+
 	bOnGround = (HitResult.bBlockingHit || HitResult.bStartPenetrating);
 
 	// Determine character`s ability to manually climb and auto-climb 
@@ -297,6 +301,7 @@ void UParkourComponent::Move(const FInputActionValue& Value)
 
 void UParkourComponent::ClimbMove()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::ClimbMove);
 	// Check is character perfoming corner move
 	if (ParkourActionTag.GetTagName().IsEqual("Parkour.Action.CornerMove"))
 		return;
@@ -331,7 +336,8 @@ void UParkourComponent::ClimbMove()
 		// Trace sphere to check whether there is a wall in front of character from arrow perspective
 		// Start gets lower after each iteration
 		OuterLoopHitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation, ClimbMoveParams.SphereTraceRadiusOuter, ECC_Visibility, ClimbMoveParams.bDrawDebugOuter, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), OuterLoopHitResult, StartLocation, EndLocation,
+			ClimbMoveParams.SphereTraceRadiusOuter, ECC_Visibility, ClimbMoveParams.bDrawDebugOuter, 0.0f);
 
 		// If hit result is penetrating at start, then skip to next iteration
 		if (OuterLoopHitResult.bStartPenetrating)
@@ -370,7 +376,8 @@ void UParkourComponent::ClimbMove()
 
 			// Trace sphere to check whether there is the top of the edge
 			// Start gets higher after each iteration
-			PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation, ClimbMoveParams.SphereTraceRadiusInner, ECC_Visibility, ClimbMoveParams.bDrawDebugInner, 0.0f);
+			PerformSphereTraceByChannel(Character->GetWorld(), InnerLoopHitResult, StartLocation, EndLocation,
+				ClimbMoveParams.SphereTraceRadiusInner, ECC_Visibility, ClimbMoveParams.bDrawDebugInner, 0.0f);
 
 			// If hit result is penetrating at start, then skip to next iteration
 			if (InnerLoopHitResult.bStartPenetrating)
@@ -417,7 +424,8 @@ void UParkourComponent::ClimbMove()
 		// Trace line to determine whether there is any blocking object on left/right side from top of the wall
 		// Start gets higher after each iteration
 		FHitResult LineTraceHitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), LineTraceHitResult, StartLocation, EndLocation, ClimbMoveParams.SideSpehreRadius, ECC_Visibility, ClimbMoveParams.bDrawDebugSide, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), LineTraceHitResult, StartLocation, EndLocation,
+			ClimbMoveParams.SideSpehreRadius, ECC_Visibility, ClimbMoveParams.bDrawDebugSide, 0.0f);
 
 		// If something is blocking hit result and it is the last iteration, then end function
 		// If not, then break the loop
@@ -472,6 +480,7 @@ void UParkourComponent::ClimbMove()
 
 void UParkourComponent::HopAction()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::HopAction);
 	ClimbLedgeResultCalculation(FirstClimbLedgeResult);
 	FindHopLocation();
 	if (CheckLedgeValid())
@@ -508,6 +517,7 @@ void UParkourComponent::CornerMove(const FVector& TargerRelativeLocation, const 
 
 void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::OutCornerMove);
 	FVector StartLocation;
 	FVector EndLocation;
 	FHitResult CheckHitResult;
@@ -524,7 +534,8 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 	EndLocation = StartLocation + ArrowRightVector * (GetHorizontalAxis() * OutCornerMoveParams.SideRightCheckDistance);
 
 	// Trace sphere to check whether there is a wall on right/left side 
-	PerformSphereTraceByChannel(Character->GetWorld(), CheckHitResult, StartLocation, EndLocation, OutCornerMoveParams.SideSphereRadius, ECC_Visibility, OutCornerMoveParams.bDrawDebugSide, 1.f);
+	PerformSphereTraceByChannel(Character->GetWorld(), CheckHitResult, StartLocation, EndLocation,
+		OutCornerMoveParams.SideSphereRadius, ECC_Visibility, OutCornerMoveParams.bDrawDebugSide, 1.f);
 
 	// If no wall was detected, then stop function
 	if (!CheckHitResult.bBlockingHit)
@@ -541,7 +552,8 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 
 		// Trace sphere to get top of the wall from front side of the wall
 		// Start gets higher after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), LoopHitResult, StartLocation, EndLocation, OutCornerMoveParams.LoopSphereRadius, ECC_Visibility, OutCornerMoveParams.bDrawDebugLoop, 0.f);
+		PerformSphereTraceByChannel(Character->GetWorld(), LoopHitResult, StartLocation, EndLocation,
+			OutCornerMoveParams.LoopSphereRadius, ECC_Visibility, OutCornerMoveParams.bDrawDebugLoop, 0.f);
 
 		// If hit result is not penetrated at start, then break the loop
 		if (!LoopHitResult.bStartPenetrating)
@@ -576,6 +588,7 @@ void UParkourComponent::OutCornerMove(const int32& OutCornerIndex)
 
 void UParkourComponent::CornerHop(bool bIsOutCorner)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::CornerHop);
 	// Determine hop distance and side
 	float CornerHorizontalHopDistance = bIsOutCorner ? CornerHopParams.CornerHorizontalHopDistanceOut : CornerHopParams.CornerHorizontalHopDistanceIn;
 	CornerHorizontalHopDistance *= GetHorizontalAxis();
@@ -607,7 +620,8 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 		// Trace line to check whether there is a wall on the needed side 
 		// Start moves to right/left after each iteration
 		FHitResult OuterLoopTraceResult;
-		PerformLineTraceByChannel(Character->GetWorld(), OuterLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, CornerHopParams.bDrawDebugOuter);
+		PerformLineTraceByChannel(Character->GetWorld(), OuterLoopTraceResult, StartLocation, EndLocation,
+			ECC_Visibility, CornerHopParams.bDrawDebugOuter);
 
 		//  Clean up HopHitTraces from previous iteration
 		HopHitTraces.Empty();
@@ -624,7 +638,8 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 			// Trace line to check wall shape
 			// Start gets higher after each iteration
 			FHitResult InnerLoopTraceResult;
-			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, CornerHopParams.bDrawDebugInner);
+			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceResult, StartLocation, EndLocation,
+				ECC_Visibility, CornerHopParams.bDrawDebugInner);
 
 			// If line trace is penetrating at start, then skip to next iteration
 			if (InnerLoopTraceResult.bStartPenetrating)
@@ -658,7 +673,8 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 
 			// Trace capsule to check whether character will fit and won't collide with anything
 			FHitResult CapsuleCheckTrace;
-			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation, CapsuleHalfHeight, CornerHopParams.ClosestCheckCapsuleRadius, ECC_Visibility, CornerHopParams.bDrawDebugCapsuleCheck);
+			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation,
+				CapsuleHalfHeight, CornerHopParams.ClosestCheckCapsuleRadius, ECC_Visibility, CornerHopParams.bDrawDebugCapsuleCheck);
 
 			// If point passes the check (capsule trace is not blocked by anything), then add it to array
 			if (!CapsuleCheckTrace.bBlockingHit)
@@ -700,7 +716,8 @@ void UParkourComponent::CornerHop(bool bIsOutCorner)
 
 	// Trace sphere to have final check whether there is a top of the new edge
 	FHitResult HitResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CornerHopParams.TopCheckSphereRadius, ECC_Visibility, CornerHopParams.bDrawDebugTopCheck);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		CornerHopParams.TopCheckSphereRadius, ECC_Visibility, CornerHopParams.bDrawDebugTopCheck);
 
 	// If hit result is not blocked by anything, then there is no top of the edge
 	if (!HitResult.bBlockingHit)
@@ -733,6 +750,7 @@ void UParkourComponent::ResetMovement()
 
 void UParkourComponent::ChekcWallShape()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::ChekcWallShape);
 	//Initialize all needed variables for further use
 	FHitResult HitResult;
 	FHitResult LoopTraceHitResult;
@@ -758,7 +776,8 @@ void UParkourComponent::ChekcWallShape()
 			// Trace sphere to get wall in front of the character and its height
 			// Start gets higher after each iteration of outer loop
 			// End gets further away after each iteration of inner loop
-			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckWallShapeParams.InnerSphereRadius, ECC_Visibility, CheckWallShapeParams.bDrawDebugInner, 0.0f);
+			PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+				CheckWallShapeParams.InnerSphereRadius, ECC_Visibility, CheckWallShapeParams.bDrawDebugInner, 0.0f);
 
 			if (HitResult.bBlockingHit && !HitResult.bStartPenetrating)
 			{
@@ -806,7 +825,8 @@ void UParkourComponent::ChekcWallShape()
 		EndLocation = (RightVector * Offset) + ImpactPoint + (ForwardVector * CheckWallShapeParams.ColumnClimbForwardCheckDistance);
 
 		// Trace line that will indicate first in the column
-		PerformLineTraceByChannel(Character->GetWorld(), LoopTraceHitResult, StartLocation, EndLocation, ECC_Visibility, CheckWallShapeParams.bDrawDebugColumn);
+		PerformLineTraceByChannel(Character->GetWorld(), LoopTraceHitResult, StartLocation, EndLocation,
+			ECC_Visibility, CheckWallShapeParams.bDrawDebugColumn);
 
 		// Clean Hop traces for each iteration (column)
 		HopHitTraces.Empty();
@@ -821,7 +841,7 @@ void UParkourComponent::ChekcWallShape()
 			InnerIndex = CheckWallShapeParams.NumOfRowIterationsFalling;
 		else
 			InnerIndex = UParkourFunctionLibrary::SelectParkourStateFloat(CheckWallShapeParams.NumOfRowIterationsDefault, 0, 0, CheckWallShapeParams.NumOfRowIterationsClimb, ParkourStateTag);
-		
+
 		// Loop that traces each row line for one column
 		for (int32 k = 0; k <= InnerIndex; k++)
 		{
@@ -830,7 +850,8 @@ void UParkourComponent::ChekcWallShape()
 
 			// Trace line that will indicate row in the column
 			// Trace gets higher after each iteration
-			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceHitResult, StartLocation, EndLocation, ECC_Visibility, CheckWallShapeParams.bDrawDebugRow);
+			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceHitResult, StartLocation, EndLocation,
+				ECC_Visibility, CheckWallShapeParams.bDrawDebugRow);
 
 			// Record all traces for this column
 			HopHitTraces.Add(InnerLoopTraceHitResult);
@@ -890,7 +911,8 @@ void UParkourComponent::ChekcWallShape()
 
 		// Trace sphere that pokes wall's top side 
 		// Trace gets further away from character after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckWallShapeParams.TopCheckSphereRadius, ECC_Visibility, CheckWallShapeParams.bDrawDebugTopCheck);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+			CheckWallShapeParams.TopCheckSphereRadius, ECC_Visibility, CheckWallShapeParams.bDrawDebugTopCheck);
 
 		// If sphere trace hit something at first iteration then set result as wall top and top hit
 		// If sphere trace hasn`t hit anything stop iterating (top side has ended or is uneven)
@@ -930,7 +952,8 @@ void UParkourComponent::ChekcWallShape()
 	EndLocation = StartLocation - FVector(0.0f, 0.0f, CheckWallShapeParams.VaultCheckZOffset);
 
 	// Trace sphere that will check whether wall is thin or thick 
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckWallShapeParams.VaultCheckSphereRadius, ECC_Visibility, CheckWallShapeParams.bDrawDebugVaultCheck);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		CheckWallShapeParams.VaultCheckSphereRadius, ECC_Visibility, CheckWallShapeParams.bDrawDebugVaultCheck);
 
 	// If hit result valid set it as wall vault 
 	if (HitResult.bBlockingHit)
@@ -947,7 +970,8 @@ bool UParkourComponent::CheckMantleSurface()
 
 	// Trace capsule to check whether surface is valid for Mantle movement (capsule height is the same as character has)
 	FHitResult HitResult;
-	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, HalfHeight, CheckMantleSurfaceParams.CapsuleRadius, ECC_Visibility, CheckMantleSurfaceParams.bDrawDebug);
+	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		HalfHeight, CheckMantleSurfaceParams.CapsuleRadius, ECC_Visibility, CheckMantleSurfaceParams.bDrawDebug);
 
 	return !HitResult.bBlockingHit;
 }
@@ -960,7 +984,8 @@ bool UParkourComponent::CheckVaultSurface()
 
 	// Trace capsule to check whether surface is valid for Vault movement (capsule height is half size as character has)
 	FHitResult HitResult;
-	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, HalfHeight, CheckVaultSurfaceParams.CapsuleRadius, ECC_Visibility, CheckVaultSurfaceParams.bDrawDebug);
+	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		HalfHeight, CheckVaultSurfaceParams.CapsuleRadius, ECC_Visibility, CheckVaultSurfaceParams.bDrawDebug);
 
 	return !HitResult.bBlockingHit;
 }
@@ -974,13 +999,15 @@ bool UParkourComponent::CheckClimbSurface()
 
 	// Trace capsule to check whether surface is valid for climbing it (capsule height is the same as character has)
 	FHitResult HitResult;
-	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, StartLocation, HalfHeight, CheckClimbSurfaceParams.CapsuleRadius, ECC_Visibility, CheckClimbSurfaceParams.bDrawDebug);
+	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, StartLocation,
+		HalfHeight, CheckClimbSurfaceParams.CapsuleRadius, ECC_Visibility, CheckClimbSurfaceParams.bDrawDebug);
 
 	return !HitResult.bBlockingHit;
 }
 
 void UParkourComponent::CheckClimbStyle(const FHitResult& HitResult, const FRotator& Rotation)
 {
+
 	FVector ForwardVector = Rotation.RotateVector(FVector::ForwardVector);
 
 	FVector StartLocation = HitResult.ImpactPoint - ForwardVector * CheckClimbStyleParams.ForwardOffset;
@@ -989,7 +1016,8 @@ void UParkourComponent::CheckClimbStyle(const FHitResult& HitResult, const FRota
 
 	// Trace sphere to check whether under edge enough space to place feet
 	FHitResult TraceResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), TraceResult, StartLocation, EndLocation, CheckClimbStyleParams.SphereCheckRadius, ECC_Visibility, CheckClimbStyleParams.bDrawDebug, 0.0f);
+	PerformSphereTraceByChannel(Character->GetWorld(), TraceResult, StartLocation, EndLocation,
+		CheckClimbStyleParams.SphereCheckRadius, ECC_Visibility, CheckClimbStyleParams.bDrawDebug, 0.0f);
 
 	// If something blocked trace than climb style can be "Braced"
 	if (TraceResult.bBlockingHit)
@@ -1021,7 +1049,8 @@ float UParkourComponent::FirstTraceHeight() const
 		// Trace sphere that gets wall point on the hands level
 		// End gets further away from character after each iteration
 		FHitResult FirstHitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), FirstHitResult, StartLocation, EndLocation, FirstTraceHeightParams.OuterSphereCheckRadius, ECC_Visibility, FirstTraceHeightParams.bDrawDebugOuter);
+		PerformSphereTraceByChannel(Character->GetWorld(), FirstHitResult, StartLocation, EndLocation,
+			FirstTraceHeightParams.OuterSphereCheckRadius, ECC_Visibility, FirstTraceHeightParams.bDrawDebugOuter);
 
 		// Skip iteration if no wall was detected
 		if (!FirstHitResult.bBlockingHit)
@@ -1040,7 +1069,8 @@ float UParkourComponent::FirstTraceHeight() const
 			// Trace sphere that gets wall top point
 			// Trace gets higher after each iteration
 			FHitResult SecondHitResult;
-			PerformSphereTraceByChannel(Character->GetWorld(), SecondHitResult, StartLocation, EndLocation, FirstTraceHeightParams.InnerSphereCheckRadius, ECC_Visibility, FirstTraceHeightParams.bDrawDebugInner);
+			PerformSphereTraceByChannel(Character->GetWorld(), SecondHitResult, StartLocation, EndLocation,
+				FirstTraceHeightParams.InnerSphereCheckRadius, ECC_Visibility, FirstTraceHeightParams.bDrawDebugInner);
 
 			// If hit result is valid record it
 			if (SecondHitResult.bBlockingHit && !SecondHitResult.bStartPenetrating)
@@ -1059,6 +1089,7 @@ float UParkourComponent::FirstTraceHeight() const
 
 void UParkourComponent::CheckClimbOrHop()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::CheckClimbOrHop);
 	FName DesireRotationName = GetClimbDesireRotation().GetTagName();
 
 	// If direction is not Forward use hop action
@@ -1126,14 +1157,17 @@ bool UParkourComponent::CheckClimbMoveSurface(const FHitResult& MovementHitResul
 	FVector RightVector = ArrowRotation.RotateVector(FVector::RightVector);
 	FVector ForwardVector = ArrowRotation.RotateVector(FVector::ForwardVector);
 
-	FVector StartLocation = MovementHitResult.ImpactPoint + GetHorizontalAxis() * RightVector * CheckClimbMoveSurfaceParams.RightOffset - ForwardVector * CheckClimbMoveSurfaceParams.ForwardOffset;
+	FVector StartLocation = MovementHitResult.ImpactPoint;
+	StartLocation += GetHorizontalAxis() * RightVector * CheckClimbMoveSurfaceParams.RightOffset;
+	StartLocation -= ForwardVector * CheckClimbMoveSurfaceParams.ForwardOffset;
 	StartLocation.Z -= CheckClimbMoveSurfaceParams.ZOffset;
 
 	FVector EndLocation = StartLocation + ForwardVector * CheckClimbMoveSurfaceParams.ForwardCheckDistance;
 
 	// Trace Capsule that checks whether something alongside the wall
 	FHitResult HitResult;
-	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CapsuleComponent->GetUnscaledCapsuleHalfHeight(), CheckClimbMoveSurfaceParams.CapsuleCheckRadius, ECC_Visibility, CheckClimbMoveSurfaceParams.bDrawDebug, 0.0f);
+	PerformCapsuleTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		CapsuleComponent->GetUnscaledCapsuleHalfHeight(), CheckClimbMoveSurfaceParams.CapsuleCheckRadius, ECC_Visibility, CheckClimbMoveSurfaceParams.bDrawDebug, 0.0f);
 
 	//If nothing blocks trace result then character can move while climbing
 	return !HitResult.bBlockingHit;
@@ -1155,7 +1189,9 @@ bool UParkourComponent::CheckOutCorner(int32& OutCornerIndex) const
 	// Loop to check whether wall has any corner
 	for (int32 i = StartIndex; i < EndIndex; i++)
 	{
-		FVector StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation() + RightVector * (GetHorizontalAxis() * CheckOutCornerParams.RightOffset) - ForwardVector * CheckOutCornerParams.InitialForwardOffset;
+		FVector StartLocation = ArrowActor->GetArrowComponent()->GetComponentLocation();
+		StartLocation += RightVector * (GetHorizontalAxis() * CheckOutCornerParams.RightOffset);
+		StartLocation -= ForwardVector * CheckOutCornerParams.InitialForwardOffset;
 		StartLocation.Z -= i * CheckOutCornerParams.ZOffsetStep; // Should be same as FOutCornerMoveParams.IndexMultiplierZOffset
 
 		FVector EndLocation = StartLocation + ForwardVector * CheckOutCornerParams.ForwardCheckDistance;
@@ -1163,7 +1199,8 @@ bool UParkourComponent::CheckOutCorner(int32& OutCornerIndex) const
 		// Trace sphere that checks whether wall has an out corner
 		// Trace gets lower after each iteration
 		FHitResult HitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckOutCornerParams.SphereCheckRadius, ECC_Visibility, CheckOutCornerParams.bDrawDebug, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+			CheckOutCornerParams.SphereCheckRadius, ECC_Visibility, CheckOutCornerParams.bDrawDebug, 0.0f);
 
 		OutCornerResult = HitResult.bStartPenetrating;
 
@@ -1180,6 +1217,7 @@ bool UParkourComponent::CheckOutCorner(int32& OutCornerIndex) const
 
 bool UParkourComponent::CheckInCorner()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::CheckInCorner);
 	FRotator ArrowRotation = ArrowActor->GetArrowComponent()->GetComponentRotation();
 	FVector ArrowRightVector = ArrowRotation.RotateVector(FVector::RightVector);
 	FVector ArrowForwardVector = ArrowRotation.RotateVector(FVector::ForwardVector);
@@ -1198,7 +1236,8 @@ bool UParkourComponent::CheckInCorner()
 
 		// Trace sphere that checks whether wall has an out corner
 		// Trace gets further from character to side after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckInCornerParams.EndWallSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugEndWall, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+			CheckInCornerParams.EndWallSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugEndWall, 0.0f);
 
 		if (!HitResult.bBlockingHit)
 			break;
@@ -1224,7 +1263,8 @@ bool UParkourComponent::CheckInCorner()
 
 		// Trace sphere that checks whether there is a wall from LocalCornerDepth point
 		// Trace gets lower after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckInCornerParams.SideSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugSide, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+			CheckInCornerParams.SideSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugSide, 0.0f);
 
 		if (HitResult.bBlockingHit)
 			break;
@@ -1251,7 +1291,8 @@ bool UParkourComponent::CheckInCorner()
 		// Trace sphere that pokes at top side of the wall at "corner" location
 		// Start gets higher after each iteration
 		// End gets lower after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), LocalTopResult, StartLocation, EndLocation, CheckInCornerParams.TopSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugTop, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), LocalTopResult, StartLocation, EndLocation,
+			CheckInCornerParams.TopSphereRadius, ECC_Visibility, CheckInCornerParams.bDrawDebugTop, 0.0f);
 
 		//If trace wasn't blocked by anything than corner is not valid  
 		if (!LocalTopResult.bBlockingHit)
@@ -1293,7 +1334,8 @@ bool UParkourComponent::CheckInCorner()
 	float StyleMultiplier = UParkourFunctionLibrary::SelectClimbStyleFloat(CheckInCornerParams.TargetForwardMultiplierBraced, CheckInCornerParams.TargetForwardMultiplierFreeHang, ClimbStyle);
 	FVector TargetRelativeLocation = HitResult.ImpactPoint - ForwardVector * StyleMultiplier;
 	TargetRelativeLocation.Z = LocalTopResult.ImpactPoint.Z;
-	TargetRelativeLocation.Z += GeneralParams.CharacterHeightDiff - UParkourFunctionLibrary::SelectClimbStyleFloat(CheckInCornerParams.TargetZOffsetBraced, CheckInCornerParams.TargetZOffsetFreeHang, ClimbStyle);
+	TargetRelativeLocation.Z += GeneralParams.CharacterHeightDiff;
+	TargetRelativeLocation.Z -= UParkourFunctionLibrary::SelectClimbStyleFloat(CheckInCornerParams.TargetZOffsetBraced, CheckInCornerParams.TargetZOffsetFreeHang, ClimbStyle);
 
 	CornerMove(TargetRelativeLocation, WallRotation);
 
@@ -1326,7 +1368,8 @@ bool UParkourComponent::CheckInCornerHop()
 		// Trace sphere that checks where wall has an end
 		// Trace gets further from character to side after each iteration
 		FHitResult HitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckInCornerHopParams.EndWallSphereRadius, ECC_Visibility, CheckInCornerHopParams.bDrawDebugEndWall);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+			CheckInCornerHopParams.EndWallSphereRadius, ECC_Visibility, CheckInCornerHopParams.bDrawDebugEndWall);
 
 		// If nothing blocks trace corner is valid for hopping
 		// No need to check first one, because first iteration always hits something (character holding on something)
@@ -1349,7 +1392,8 @@ bool UParkourComponent::CheckInCornerHop()
 		// Trace sphere that pokes wall from other side from character center to top of the wall to get wall rotation
 		// Trace gets higher after each iteration
 		FHitResult HitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckInCornerHopParams.RotationSphereRadius, ECC_Visibility, CheckInCornerHopParams.bDrawDebugRotation);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+			CheckInCornerHopParams.RotationSphereRadius, ECC_Visibility, CheckInCornerHopParams.bDrawDebugRotation);
 
 		// If something blocked trace, corner is valid
 		if (HitResult.bBlockingHit && !HitResult.bStartPenetrating)
@@ -1392,7 +1436,8 @@ bool UParkourComponent::CheckOutCornerHop()
 		// Trace sphere that checks whether there is a wall on the side
 		// Trace gets higher after each iteration
 		FHitResult HitResult;
-		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, CheckOutCornerHopParams.SphereRadius, ECC_Visibility, CheckOutCornerHopParams.bDrawDebug);
+		PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+			CheckOutCornerHopParams.SphereRadius, ECC_Visibility, CheckOutCornerHopParams.bDrawDebug);
 
 		// If something blocked trace, corner is valid
 		if (HitResult.bBlockingHit && !HitResult.bStartPenetrating)
@@ -1566,12 +1611,14 @@ FRotator UParkourComponent::GetDesiredRotation() const
 
 void UParkourComponent::FindDropDownHangLocation()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::FindDropDownHangLocation);
 	FVector StartLocation = Character->GetActorLocation();
 	FVector EndLocation = StartLocation - FVector(0.0f, 0.0f, FindDropDownHangLocationParams.BottomZOffset);
 
 	// Trace sphere to check whether is something under character
 	FHitResult HitResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, FindDropDownHangLocationParams.BottomSphereRadius, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugBottom);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		FindDropDownHangLocationParams.BottomSphereRadius, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugBottom);
 
 	if (!HitResult.bBlockingHit || HitResult.bStartPenetrating)
 		return;
@@ -1584,7 +1631,8 @@ void UParkourComponent::FindDropDownHangLocation()
 	EndLocation = StartLocation - ForwardVector * FindDropDownHangLocationParams.WallForwardCheckDistance;
 
 	// Trace sphere to check whether is something in the way from floor point to the looking direction
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, FindDropDownHangLocationParams.WallSphereRadius, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugWall);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		FindDropDownHangLocationParams.WallSphereRadius, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugWall);
 
 	if (!HitResult.bBlockingHit || HitResult.bStartPenetrating)
 		return;
@@ -1608,7 +1656,8 @@ void UParkourComponent::FindDropDownHangLocation()
 		// Trace sphere to check whether is something in the way from floor point to the looking direction
 		// Indicates first in the column
 		FHitResult LoopTraceHitResult;
-		PerformLineTraceByChannel(Character->GetWorld(), LoopTraceHitResult, StartLocation, EndLocation, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugColumn);
+		PerformLineTraceByChannel(Character->GetWorld(), LoopTraceHitResult, StartLocation, EndLocation,
+			ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugColumn);
 
 		// Clean Hop traces for each iteration (column)
 		HopHitTraces.Empty();
@@ -1625,7 +1674,8 @@ void UParkourComponent::FindDropDownHangLocation()
 			EndLocation.Z += FindDropDownHangLocationParams.RowZOffsetStep;
 
 			FHitResult InnerLoopTraceHitResult;
-			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceHitResult, StartLocation, EndLocation, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugRow);
+			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceHitResult, StartLocation, EndLocation,
+				ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugRow);
 
 			// Record all traces for this column
 			HopHitTraces.Add(InnerLoopTraceHitResult);
@@ -1675,7 +1725,8 @@ void UParkourComponent::FindDropDownHangLocation()
 	EndLocation.Z -= FindDropDownHangLocationParams.TopZCheckDistance;
 
 	//Trace sphere to get top of the wall
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, FindDropDownHangLocationParams.TopSphereRadius, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugTop);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		FindDropDownHangLocationParams.TopSphereRadius, ECC_Visibility, FindDropDownHangLocationParams.bDrawDebugTop);
 
 	if (!HitResult.bBlockingHit)
 		return;
@@ -1698,6 +1749,7 @@ void UParkourComponent::FindDropDownHangLocation()
 
 void UParkourComponent::FindHopLocation()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::FindHopLocation);
 	// Set up distances to hop
 	float VerticalDirectionMultiplier = UParkourFunctionLibrary::SelectDirectionFloat(
 		FindHopLocationParams.VerticalForward,
@@ -1721,14 +1773,18 @@ void UParkourComponent::FindHopLocation()
 		FindHopLocationParams.HorizontalDiagonal,
 		GetClimbDesireRotation());
 
-	float HorizontalDistanceStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(FindHopLocationParams.HorizontalOffsetMultiplierBraced, FindHopLocationParams.HorizontalOffsetMultiplierFree, ClimbStyle);
+	float HorizontalDistanceStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(FindHopLocationParams.HorizontalOffsetMultiplierBraced,
+		FindHopLocationParams.HorizontalOffsetMultiplierFree,
+		ClimbStyle);
 
 	VerticalHopDistance = FindHopLocationParams.VerticalOffsetMultiplier * VerticalDirectionMultiplier;
 	HorizontalHopDistance = HorizontalDistanceStyle * HorizontalDirectionMultiplier;
 
 	WallHitTraces.Empty();
 
-	int32 ColumnNumOfIterationsStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(FindHopLocationParams.ColumnNumOfIterationsBraced, FindHopLocationParams.ColumnNumOfIterationsFree, ClimbStyle);
+	int32 ColumnNumOfIterationsStyle = UParkourFunctionLibrary::SelectClimbStyleFloat(FindHopLocationParams.ColumnNumOfIterationsBraced,
+		FindHopLocationParams.ColumnNumOfIterationsFree,
+		ClimbStyle);
 
 	// Loop to determine edge of the wall to hop (this loop represents columns of line traces)
 	for (int32 i = 0; i < ColumnNumOfIterationsStyle; i++)
@@ -1750,7 +1806,8 @@ void UParkourComponent::FindHopLocation()
 		// Trace sphere to check whether there is some wall 
 		// Indicates first in the column
 		FHitResult OuterLoopTraceResult;
-		PerformLineTraceByChannel(Character->GetWorld(), OuterLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, FindHopLocationParams.bDrawDebugColumn);
+		PerformLineTraceByChannel(Character->GetWorld(), OuterLoopTraceResult, StartLocation, EndLocation,
+			ECC_Visibility, FindHopLocationParams.bDrawDebugColumn);
 
 		HopHitTraces.Empty();
 
@@ -1766,7 +1823,8 @@ void UParkourComponent::FindHopLocation()
 			// Trace line that will indicate row in the column
 			// Trace gets higher after each iteration
 			FHitResult InnerLoopTraceResult;
-			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceResult, StartLocation, EndLocation, ECC_Visibility, FindHopLocationParams.bDrawDebugRow);
+			PerformLineTraceByChannel(Character->GetWorld(), InnerLoopTraceResult, StartLocation, EndLocation,
+				ECC_Visibility, FindHopLocationParams.bDrawDebugRow);
 
 			if (InnerLoopTraceResult.bStartPenetrating)
 				continue;
@@ -1797,7 +1855,8 @@ void UParkourComponent::FindHopLocation()
 
 			// Trace capsule to check whether character will fit and won't collide with anything
 			FHitResult CapsuleCheckTrace;
-			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation, CapsuleHalfHeight, FindHopLocationParams.CapsuleRadius, ECC_Visibility, FindHopLocationParams.bDrawDebugCapsule);
+			PerformCapsuleTraceByChannel(Character->GetWorld(), CapsuleCheckTrace, CapsuleStartLocation, CapsuleEndLocation,
+				CapsuleHalfHeight, FindHopLocationParams.CapsuleRadius, ECC_Visibility, FindHopLocationParams.bDrawDebugCapsule);
 
 			// If nothing blocks capsule trace than line trace can be considered
 			if (!CapsuleCheckTrace.bBlockingHit)
@@ -1887,7 +1946,8 @@ void UParkourComponent::FindHopLocation()
 
 	// Trace sphere to get top of the edge 
 	FHitResult HitResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, FindHopLocationParams.TopSphereRadius, ECC_Visibility, FindHopLocationParams.bDrawDebugTop);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		FindHopLocationParams.TopSphereRadius, ECC_Visibility, FindHopLocationParams.bDrawDebugTop);
 
 	if (!HitResult.bBlockingHit)
 		return;
@@ -1982,7 +2042,9 @@ float UParkourComponent::GetClimbMoveSpeed() const
 	float BracedClampedSpeed = FMath::Clamp(AnimInstance->GetCurveValue("Climb Move Speed"), 1.0f, GeneralParams.BracedMoveSpeedMaxClamp);
 	float FreeHangClampedSpeed = FMath::Clamp(AnimInstance->GetCurveValue("Climb Move Speed"), 1.0f, GeneralParams.FreeHangMoveSpeedMaxClamp);
 
-	return UParkourFunctionLibrary::SelectClimbStyleFloat(BracedClampedSpeed * GeneralParams.BracedMoveSpeedMultiplier, FreeHangClampedSpeed * GeneralParams.FreeHangMoveSpeedMultiplier, ClimbStyle);
+	return UParkourFunctionLibrary::SelectClimbStyleFloat(BracedClampedSpeed * GeneralParams.BracedMoveSpeedMultiplier,
+		FreeHangClampedSpeed * GeneralParams.FreeHangMoveSpeedMultiplier,
+		ClimbStyle);
 }
 
 float UParkourComponent::GetClimbLeftHandZOffset() const
@@ -2025,6 +2087,7 @@ float UParkourComponent::GetClimbRightHandZOffset() const
 
 void UParkourComponent::ParkourType(bool bAutoClimb)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::ParkourType);
 	// If top of the wall is not found make character jump
 	if (!WallTopResult.bBlockingHit)
 	{
@@ -2071,7 +2134,8 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 	}
 
 	// If wall height, vault height and wall depth meet all min and max requirements, then execute Vault
-	if (WallHeight > ParkourTypeParams.WallHeightLevel2 && WallHeight <= ParkourTypeParams.WallHeightLevel4 && VaultHeight <= ParkourTypeParams.VaultHeightLevel2 && WallDepth >= ParkourTypeParams.WallDepthMin && WallDepth <= ParkourTypeParams.WallDepthLevel2)
+	if (WallHeight > ParkourTypeParams.WallHeightLevel2 && WallHeight <= ParkourTypeParams.WallHeightLevel4 &&
+		VaultHeight <= ParkourTypeParams.VaultHeightLevel2 && WallDepth >= ParkourTypeParams.WallDepthMin && WallDepth <= ParkourTypeParams.WallDepthLevel2)
 	{
 		if (WallHeight <= ParkourTypeParams.WallHeightLevel3 && VaultHeight <= ParkourTypeParams.VaultHeightLevel1 && WallDepth <= ParkourTypeParams.WallDepthLevel1)
 		{
@@ -2132,6 +2196,7 @@ void UParkourComponent::ParkourType(bool bAutoClimb)
 
 void UParkourComponent::CheckAirHangOrClimb()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::CheckAirHangOrClimb);
 	if (!CheckClimbSurface())
 		return;
 
@@ -2155,6 +2220,7 @@ void UParkourComponent::CheckAirHangOrClimb()
 
 void UParkourComponent::SetParkourAction(const FGameplayTag& NewParkourAction)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::SetParkourAction);
 	// If new parkour tag is  the same as current, then stop execution
 	if (ParkourActionTag == NewParkourAction)
 		return;
@@ -2389,8 +2455,10 @@ void UParkourComponent::SetUpParkourSettings(ECollisionEnabled::Type CollsionTyp
 
 FGameplayTag UParkourComponent::SelectHopAction()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::SelectHopAction);
+
 	FGameplayTag ForwardHopMovementTag = UGameplayTagsManager::Get().RequestGameplayTag(FName("Parkour.Action.ClimbHopUp"));
-	
+
 	SetClimbDirection(GetHopDirection());
 
 	if (ClimbStyle.GetTagName().IsEqual("Parkour.ClimbStyle.Braced"))
@@ -2550,6 +2618,7 @@ void UParkourComponent::FinishTimeline()
 
 void UParkourComponent::ClimbLedgeResultCalculation(FHitResult& ClimbLedgeResult)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::ClimbLedgeResultCalculation);
 	FRotator ReverseRotation = UParkourFunctionLibrary::NormalReverseRotationZ(WallHitResult.ImpactNormal);
 	FVector ForwardVector = ReverseRotation.RotateVector(FVector::ForwardVector);
 
@@ -2557,7 +2626,8 @@ void UParkourComponent::ClimbLedgeResultCalculation(FHitResult& ClimbLedgeResult
 	FVector EndLocation = WallHitResult.ImpactPoint + (ForwardVector * ClimbLedgeResultCalculationParams.EdgeForwardCheckDistance);
 
 	// Trace sphere to get edge location on the wall
-	PerformSphereTraceByChannel(Character->GetWorld(), ClimbLedgeResult, StartLocation, EndLocation, ClimbLedgeResultCalculationParams.EdgeSphereRadius, ECC_Visibility, ClimbLedgeResultCalculationParams.bDrawDebugEdge);
+	PerformSphereTraceByChannel(Character->GetWorld(), ClimbLedgeResult, StartLocation, EndLocation,
+		ClimbLedgeResultCalculationParams.EdgeSphereRadius, ECC_Visibility, ClimbLedgeResultCalculationParams.bDrawDebugEdge);
 
 	// If nothing blocks trace then edge is not valid
 	if (!ClimbLedgeResult.bBlockingHit)
@@ -2567,13 +2637,16 @@ void UParkourComponent::ClimbLedgeResultCalculation(FHitResult& ClimbLedgeResult
 	WallRotation = UParkourFunctionLibrary::NormalReverseRotationZ(ClimbLedgeResult.ImpactNormal);
 	ForwardVector = WallRotation.RotateVector(FVector::ForwardVector);
 
-	StartLocation = ClimbLedgeResult.ImpactPoint + (ForwardVector * ClimbLedgeResultCalculationParams.TopInitialForwardOffset) + FVector(0.0f, 0.0f, ClimbLedgeResultCalculationParams.TopInitialZOffset);
+	StartLocation = ClimbLedgeResult.ImpactPoint;
+	StartLocation += (ForwardVector * ClimbLedgeResultCalculationParams.TopInitialForwardOffset);
+	StartLocation += FVector(0.0f, 0.0f, ClimbLedgeResultCalculationParams.TopInitialZOffset);
 	EndLocation = StartLocation - FVector(0.0f, 0.0f, ClimbLedgeResultCalculationParams.TopInitialZCheckDistance);
 
 	// Trace sphere to get location of the top of the wall and its height
 	// Here debug nicely shows where is the origin ledge and target ledge
 	FHitResult HitResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, ClimbLedgeResultCalculationParams.TopSpehreRadius, ECC_Visibility, ClimbLedgeResultCalculationParams.bDrawDebugTop);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		ClimbLedgeResultCalculationParams.TopSpehreRadius, ECC_Visibility, ClimbLedgeResultCalculationParams.bDrawDebugTop);
 
 	ClimbLedgeResult.Location = HitResult.Location;
 	ClimbLedgeResult.ImpactPoint.Z = HitResult.ImpactPoint.Z;
@@ -2581,6 +2654,7 @@ void UParkourComponent::ClimbLedgeResultCalculation(FHitResult& ClimbLedgeResult
 
 void UParkourComponent::LeftClimbIK()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::LeftClimbIK);
 	FHitResult LedgeResult = SecondClimbLedgeResult;
 	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.ReachLedge"))
 		return;
@@ -2594,6 +2668,7 @@ void UParkourComponent::LeftClimbIK()
 
 void UParkourComponent::RightClimbIK()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::RightClimbIK);
 	FHitResult LedgeResult = SecondClimbLedgeResult;
 	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.ReachLedge"))
 		return;
@@ -2619,12 +2694,16 @@ void UParkourComponent::HandLedgeIK(FHitResult& LedgeResult, bool bIsLeft)
 		FVector RightVector = WallRotation.RotateVector(FVector::RightVector);
 
 
-		FVector StartLocation = LedgeResult.ImpactPoint - ForwardVector * HandLedgeIKParams.OuterForwardOffset - RightVector * (HandLedgeIKParams.OuterInitialRightOffset + i * HandLedgeIKParams.OuterRightOffsetStep) * RightOffsetMultiplier;
+		FVector StartLocation = LedgeResult.ImpactPoint;
+		StartLocation -= ForwardVector * HandLedgeIKParams.OuterForwardOffset;
+		StartLocation -= RightVector * (HandLedgeIKParams.OuterInitialRightOffset + i * HandLedgeIKParams.OuterRightOffsetStep) * RightOffsetMultiplier;
+		
 		FVector EndLocation = StartLocation + ForwardVector * HandLedgeIKParams.OuterForwardCheckDIstance;
 
 		// Trace sphere to get front side of the wall edge
 		// Trace get further to left after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), FirstHitResult, StartLocation, EndLocation, HandLedgeIKParams.OuterFSphereRadius, ECC_Visibility, HandLedgeIKParams.bDrawDebugOuter);
+		PerformSphereTraceByChannel(Character->GetWorld(), FirstHitResult, StartLocation, EndLocation,
+			HandLedgeIKParams.OuterFSphereRadius, ECC_Visibility, HandLedgeIKParams.bDrawDebugOuter);
 
 		if (!FirstHitResult.bBlockingHit)
 			continue;
@@ -2644,7 +2723,8 @@ void UParkourComponent::HandLedgeIK(FHitResult& LedgeResult, bool bIsLeft)
 			// Trace sphere to get hand lcoation on the edge on top
 			// Trace get higher each iteration
 			FHitResult SecondHitResult;
-			PerformSphereTraceByChannel(Character->GetWorld(), SecondHitResult, StartLocation, EndLocation, HandLedgeIKParams.InnerSphereRadius, ECC_Visibility, HandLedgeIKParams.bDrawDebugInner);
+			PerformSphereTraceByChannel(Character->GetWorld(), SecondHitResult, StartLocation, EndLocation,
+				HandLedgeIKParams.InnerSphereRadius, ECC_Visibility, HandLedgeIKParams.bDrawDebugInner);
 
 
 			if (!SecondHitResult.bStartPenetrating)
@@ -2784,6 +2864,7 @@ void UParkourComponent::SetFootIK(FHitResult& LedgeResult, bool bIsLeft, bool bI
 
 void UParkourComponent::ClimbMoveIK()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::ClimbMoveIK);
 	if (!ParkourStateTag.GetTagName().IsEqual("Parkour.State.Climb"))
 		return;
 
@@ -2812,7 +2893,8 @@ void UParkourComponent::UpdateClimbMoveHandIK(bool bIsLeft)
 	// Loop to get front side of the wall edge in front of a hand
 	for (int32 i = 0; i < UpdateClimbMoveHandIKParams.FrontNumOfIterations; i++)
 	{
-		FVector InitialVector = CharacterMesh->GetSocketLocation(HandSocketName) + Character->GetActorRightVector() * (i * UpdateClimbMoveHandIKParams.FrontRightOffsetStep + GeneralParams.ClimbHandSpace) * RightOffsetMultiplier;
+		FVector InitialVector = CharacterMesh->GetSocketLocation(HandSocketName);
+		InitialVector += Character->GetActorRightVector() * (i * UpdateClimbMoveHandIKParams.FrontRightOffsetStep + GeneralParams.ClimbHandSpace) * RightOffsetMultiplier;
 		InitialVector.Z -= GeneralParams.CharacterHeightDiff;
 
 		FVector StartLocation = InitialVector - Character->GetActorForwardVector() * UpdateClimbMoveHandIKParams.FrontForwardOffset;
@@ -2820,7 +2902,8 @@ void UParkourComponent::UpdateClimbMoveHandIK(bool bIsLeft)
 
 		// Trace sphere to get wall front side from hand IK socket
 		// Trace gets further to side from hand position after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), FirstHitResult, StartLocation, EndLocation, UpdateClimbMoveHandIKParams.FrontSphereRadius, ECC_Visibility, UpdateClimbMoveHandIKParams.bDrawDebugFront, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), FirstHitResult, StartLocation, EndLocation,
+			UpdateClimbMoveHandIKParams.FrontSphereRadius, ECC_Visibility, UpdateClimbMoveHandIKParams.bDrawDebugFront, 0.0f);
 
 		// If nothing blocks trace, then there is no wall in front of the hand
 		if (FirstHitResult.bStartPenetrating || !FirstHitResult.bBlockingHit)
@@ -2840,14 +2923,16 @@ void UParkourComponent::UpdateClimbMoveHandIK(bool bIsLeft)
 	for (int32 i = 0; i < UpdateClimbMoveHandIKParams.TopNumOfIterations; i++)
 	{
 		FVector StartLocation = FirstHitResult.ImpactPoint;
-		StartLocation.Z = ArrowActor->GetArrowComponent()->GetComponentLocation().Z + UpdateClimbMoveHandIKParams.TopInitialZOffset + i * UpdateClimbMoveHandIKParams.TopZOffsetStep;
-
+		StartLocation.Z = ArrowActor->GetArrowComponent()->GetComponentLocation().Z;
+		StartLocation.Z += UpdateClimbMoveHandIKParams.TopInitialZOffset + i * UpdateClimbMoveHandIKParams.TopZOffsetStep;
+		
 		FVector EndLocation = StartLocation;
 		EndLocation.Z -= UpdateClimbMoveHandIKParams.TopZOffsetStep * (i + 10);
 
 		// Trace sphere to check whether wall top side has enough space for hand
 		// Trace gets higher after each iteration
-		PerformSphereTraceByChannel(Character->GetWorld(), SecondHitResult, StartLocation, EndLocation, UpdateClimbMoveHandIKParams.TopSphereRadius, ECC_Visibility, UpdateClimbMoveHandIKParams.bDrawDebugTop, 0.0f);
+		PerformSphereTraceByChannel(Character->GetWorld(), SecondHitResult, StartLocation, EndLocation,
+			UpdateClimbMoveHandIKParams.TopSphereRadius, ECC_Visibility, UpdateClimbMoveHandIKParams.bDrawDebugTop, 0.0f);
 
 		// If hit result is valid then break the loop (it will be hand location)
 		// If hit result is not valid and it is last iteration, then no need to check futrther wall is not valid
@@ -2864,8 +2949,10 @@ void UParkourComponent::UpdateClimbMoveHandIK(bool bIsLeft)
 
 	FRotator XRotation = FRotationMatrix::MakeFromX(FirstHitResult.ImpactNormal).Rotator();
 	FVector ForwardVector = XRotation.RotateVector(FVector::ForwardVector);
+	float ForwardOffset = UParkourFunctionLibrary::SelectClimbStyleFloat(GeneralParams.CharacterHandFront, 0.0f, ClimbStyle) - UpdateClimbMoveHandIKParams.ResultForwardOffset;
 
-	FVector HandLocation = FirstHitResult.ImpactPoint - ForwardVector * (UParkourFunctionLibrary::SelectClimbStyleFloat(GeneralParams.CharacterHandFront, 0.0f, ClimbStyle) - UpdateClimbMoveHandIKParams.ResultForwardOffset);
+	FVector HandLocation = FirstHitResult.ImpactPoint;
+	HandLocation -= ForwardVector * ForwardOffset;
 	HandLocation.Z = SecondHitResult.ImpactPoint.Z + GeneralParams.CharacterHeightDiff + GeneralParams.CharacterHandUp + GetClimbLeftHandZOffset();
 	HandLocation.Z -= UParkourFunctionLibrary::SelectClimbStyleFloat(UpdateClimbMoveHandIKParams.ResultZOffsetBraced, UpdateClimbMoveHandIKParams.ResultZOffsetFree, ClimbStyle);
 
@@ -2942,7 +3029,8 @@ void UParkourComponent::UpdateClimbMoveFootIK(bool bIsLeft)
 			// Trace sphere to get wall in front of the foot 
 			// Trace gets further to side from foot location after each iteration of outer loop
 			// Trace gets lower after each iteration of inner loop
-			PerformSphereTraceByChannel(Character->GetWorld(), FootHitResult, StartLocation, EndLocation, UpdateClimbMoveFootIKParams.LoopSphereRadius, ECC_Visibility, UpdateClimbMoveFootIKParams.bDrawDebugLoop, 0.0f);
+			PerformSphereTraceByChannel(Character->GetWorld(), FootHitResult, StartLocation, EndLocation,
+				UpdateClimbMoveFootIKParams.LoopSphereRadius, ECC_Visibility, UpdateClimbMoveFootIKParams.bDrawDebugLoop, 0.0f);
 
 			// If nothing blocks trace, then there is no valid wall 
 			if (!FootHitResult.bBlockingHit || FootHitResult.bStartPenetrating)
@@ -2998,6 +3086,7 @@ void UParkourComponent::ResetFootIK(bool bIsLeft)
 
 void UParkourComponent::PlayParkourMontage()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::SetParkourAction);
 	// Check whether parkour data asset was loaded corectly
 	checkf(ParkourVariables != nullptr, TEXT("ParkourVariables are not initialized for \"%s\" action"), *ParkourActionTag.GetTagName().ToString());
 
@@ -3051,7 +3140,8 @@ FVector UParkourComponent::FindWarpLocationChecked(const FVector& ImpactPoint, f
 
 	// Trace sphere to check whether place with offset is valid
 	FHitResult HitResult;
-	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation, FindWarpLocationCheckedParams.SphereRadius, ECC_Visibility, FindWarpLocationCheckedParams.bDrawDebug);
+	PerformSphereTraceByChannel(Character->GetWorld(), HitResult, StartLocation, EndLocation,
+		FindWarpLocationCheckedParams.SphereRadius, ECC_Visibility, FindWarpLocationCheckedParams.bDrawDebug);
 
 	FVector AdjustedImpactPoint = HitResult.bBlockingHit ? HitResult.ImpactPoint : ImpactPoint;
 
@@ -3074,6 +3164,7 @@ void UParkourComponent::FindMontageStartTime()
 void UParkourComponent::PreinitializeParkourDataAssets(FParkourVariablesCollection& ParkourCollection) const
 {
 	// Preset all parkour data assets
+	TRACE_CPUPROFILER_EVENT_SCOPE(UParkourComponent::PreinitializeParkourDataAssets);
 
 	static ConstructorHelpers::FObjectFinder<UParkourVariables> BracedClimbDTObj(TEXT("/ParkourSystemPlugin/DataAssets/DT_BracedClimb"));
 	ParkourCollection.BracedClimbDT = BracedClimbDTObj.Object;
