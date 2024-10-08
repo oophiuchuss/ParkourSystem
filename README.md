@@ -36,6 +36,8 @@ Import Motion Warping plugin.
 
 Do not forget to Initialize references.
 
+Also here is the [link](https://drive.google.com/file/d/1-gjdKbjB4Mg7y9FZnjFmUOLig3mJmEih/view?usp=sharing) to GoogleDrive with .zip packaged template game 
+
 ## Input
 
 SPACE for all climb actions
